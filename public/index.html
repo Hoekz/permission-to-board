@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1">
+    <meta name="apple-mobile-web-app-title" content="Permssion to Board" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <title>Permission to Board</title>
+
+    <script defer src="/__/firebase/3.8.0/firebase-app.js"></script>
+    <script defer src="/__/firebase/3.8.0/firebase-auth.js"></script>
+    <script defer src="/__/firebase/3.8.0/firebase-database.js"></script>
+    <script defer src="/__/firebase/init.js"></script>
+
+    <script defer src="js/bind.js"></script>
+    <script defer src="js/authorize.js"></script>
+    <script defer src="js/api.js"></script>
+    <script defer src="js/db.js"></script>
+    <script defer src="js/calc.js"></script>
+    <script defer src="js/draw.js"></script>
+    <script defer src="js/create-game.js"></script>
+    <script defer src="js/join-game.js"></script>
+    <script defer src="js/show-game.js"></script>
+    <script defer src="js/show-error.js"></script>
+    <script defer src="js/app.js"></script>
+
+    <link rel="manifest" href="manifest.json">
+    <link href="css/colors.css" rel="stylesheet"/>
+    <link href="css/style.css" rel="stylesheet"/>
+</head>
+<body hide>
+    <div portrait>
+        Please Rotate Your Device
+    </div>
+    <div landscape>
+        <div ref="landing" route default>
+            <img ref="logo" src="img/title.png"/>
+            <div ref="create" nav-to="/create/color" btn blue>Create New Game</div>
+            <div ref="join" nav-to="/join/find" btn green>Join Existing Game</div>
+            <div ref="host" nav-to="/display/find" btn yellow desktop>Host Existing Game</div>
+        </div>
+        <div ref="create" route>
+            <div ref="color" route>
+                <div header>Choose Token Color</div>
+                <div ref="tokens" template></div>
+            </div>
+            <div ref="share" route>
+                <div header>Share Your Game Key</div>
+                <div ref="key" eval="model.shareableKey"></div>
+                <div nav-to="/game" ref="continue" btn blue>Continue</div>
+            </div>
+        </div>
+        <div ref="join" route>
+            <div ref="find" route>
+                <div header>Enter Your Game Key</div>
+                <input ref="key" type="text" placeholder="Game Key" maxlength="4"/>
+                <div ref="check" btn blue>Find</div>
+            </div>
+            <div ref="color" route>
+                <div header>Choose Token Color</div>
+                <div ref="tokens" template hide></div>
+            </div>
+        </div>
+        <div ref="game" route>
+            <canvas ref="canvas"></canvas>
+            <div ref="hand"></div>
+            <div ref="deck"></div>
+            <div ref="players"></div>
+        </div>
+        <div ref="display" route>
+            <div ref="find" route>
+                <div header>Enter Your Game Key</div>
+                <input ref="key" type="text" placeholder="Game Key" maxlength="4"/>
+                <div ref="check" btn blue>Find</div>
+            </div>
+            <div ref="show" route>
+                <canvas ref="canvas"></canvas>
+                <div ref="deck"></div>
+                <div ref="players"></div>
+                <div ref="selected" if="model.selected">
+                    <div>From: <span eval="model.selected.start"></span></div>
+                    <div>To: <span eval="model.selected.end"></span></div>
+                    <div>Requires: <span eval="model.selected.length + ' ' + model.selected.color"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div ref="loading" hide>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <div ref="error-log" route></div>
+</body>
+<script type="template" ref="tokens">
+    <div red token on-click="model.choose('red')"></div>
+    <div yellow token on-click="model.choose('yellow')"></div>
+    <div green token on-click="model.choose('green')"></div>
+    <div blue token on-click="model.choose('blue')"></div>
+    <div black token on-click="model.other('black')"></div>
+</script>
+</html>

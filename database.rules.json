@@ -1,0 +1,166 @@
+{
+  "rules": {
+    ".read": "false",
+    ".write": "false",
+    "colors": {
+      ".write": "false"
+    },
+    "$game": {
+      ".read": "auth != null",
+      ".validate": "(!data.exists() && newData.hasChildren(['players', 'board', 'deck'])) || !newData.exists()",
+      "started": {
+        ".validate": "!data.exists() && newData.val() == 'fight!'"
+      },
+      "board": {
+        ".validate": "(!data.exists() && newData.hasChildren(['points', 'connections'])) || !newData.exists()",
+        "points": {
+          "$point": {
+            ".validate": "!data.exists() && newData.hasChildren(['x', 'y'])",
+            "x": {
+              ".validate": "!data.exists() && newData.isNumber() && newData.val() > 0 && newData.val() < 100"
+            },
+            "y": {
+              ".validate": "!data.exists() && newData.isNumber()  && newData.val() > 0 && newData.val() < 100"
+            }
+          }
+        },
+        "connections": {
+          "$connection": {
+            ".validate": "!data.exists() && newData.hasChildren(['start', 'end', 'length', 'color'])",
+            "start": {
+              ".validate": "!data.exists() && root.child($game).child('points').hasChild(newData.val())"
+            },
+            "end": {
+              ".validate": "!data.exists() && root.child($game).child('points').hasChild(newData.val())"
+            },
+            "color": {
+              ".validate": "!data.exists() && root.child('colors').hasChild(newData.val()) || newData.val() == 'any'"
+            },
+            "length": {
+              ".validate": "!data.exists() && newData.val() > 0 && newData.val() < 7"
+            },
+            "occupant": {
+              ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
+            }
+          }
+        }
+      },
+      "players": {
+        "$player": {
+          "hand": {
+            ".read": "auth.uid == $player",
+            "red": {
+              ".validate": "newData.isNumber()"
+            },
+            "orange": {
+              ".validate": "newData.isNumber()"
+            },
+            "yellow": {
+              ".validate": "newData.isNumber()"
+            },
+            "green": {
+              ".validate": "newData.isNumber()"
+            },
+            "blue": {
+              ".validate": "newData.isNumber()"
+            },
+            "violet": {
+              ".validate": "newData.isNumber()"
+            },
+            "black": {
+              ".validate": "newData.isNumber()"
+            },
+            "white": {
+              ".validate": "newData.isNumber()"
+            },
+            "locomotive": {
+              ".validate": "newData.isNumber()"
+            }
+          },
+          "trains": {
+            ".validate": "newData.isNumber()"
+          },
+          "name": {
+            ".validate": "newData.isString()"
+          }
+        },
+        "red": {
+          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
+        },
+        "yellow": {
+          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
+        },
+        "green": {
+          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
+        },
+        "blue": {
+          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
+        },
+        "black": {
+          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
+        }
+      },
+      "deck": {
+        ".read": "false",
+        "red": {
+          ".validate": "newData.isNumber()"
+        },
+        "orange": {
+          ".validate": "newData.isNumber()"
+        },
+        "yellow": {
+          ".validate": "newData.isNumber()"
+        },
+        "green": {
+          ".validate": "newData.isNumber()"
+        },
+        "blue": {
+          ".validate": "newData.isNumber()"
+        },
+        "violet": {
+          ".validate": "newData.isNumber()"
+        },
+        "black": {
+          ".validate": "newData.isNumber()"
+        },
+        "white": {
+          ".validate": "newData.isNumber()"
+        },
+        "locomotive": {
+          ".validate": "newData.isNumber()"
+        }
+      },
+      "display": {
+        "slot-1": {
+          ".validate": "root.child('colors').hasChild(newData.val())"
+        },
+        "slot-2": {
+          ".validate": "root.child('colors').hasChild(newData.val())"
+        },
+        "slot-3": {
+          ".validate": "root.child('colors').hasChild(newData.val())"
+        },
+        "slot-4": {
+          ".validate": "root.child('colors').hasChild(newData.val())"
+        },
+        "slot-5": {
+          ".validate": "root.child('colors').hasChild(newData.val())"
+        }
+      },
+      "current": {
+        ".validate": "newData.hasChildren(['player', 'action']) && data.child('player').val() != newData.child('player').val() && newData.child('action').val() == 0",
+        "player": {
+          ".validate": "root.child($game).child('players').hasChild(newData.val())"
+        },
+        "action": {
+          ".validate": "data.val() == 0 && newData.val() == 1"
+        }
+      },
+      "order": {
+        "$player": {
+          ".validate": "root.child($game).child('players').hasChild(newData.val())"
+        }
+      }
+    }
+  }
+}
