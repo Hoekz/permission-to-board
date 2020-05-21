@@ -48,7 +48,7 @@
       "players": {
         "$player": {
           "hand": {
-            ".read": "auth.uid == $player",
+            ".read": "auth.uid == data.child('uid')",
             "red": {
               ".validate": "newData.isNumber()"
             },
@@ -82,22 +82,10 @@
           },
           "name": {
             ".validate": "newData.isString()"
+          },
+          "uid": {
+            ".validate": "newData.isString()"
           }
-        },
-        "red": {
-          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
-        },
-        "yellow": {
-          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
-        },
-        "green": {
-          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
-        },
-        "blue": {
-          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
-        },
-        "black": {
-          ".validate": "!data.exists() && root.child($game).child('players').hasChild(newData.val())"
         }
       },
       "deck": {
