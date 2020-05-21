@@ -25,6 +25,10 @@ body {
     box-shadow: inset 0 0 3rem 2rem rgba(0,0,0,0.75);
 }
 
+[portrait] {
+    display: none;
+}
+
 @media screen and (max-width: 720px) {
     [desktop] {
         display: none !important;
@@ -35,6 +39,7 @@ body {
     }
 
     [portrait] {
+        display: block;
         color: white;
         font-size: 3rem;
         text-align: center;
@@ -119,7 +124,7 @@ body {
     justify-content: space-around;
 }
 
-[btn], [ref='key'] {
+[btn], [key] {
     display: inline-block;
     padding: 0.5rem 2rem;
     font-size: 1.5rem;
@@ -130,7 +135,8 @@ body {
     cursor: pointer;
 }
 
-[ref='key'] {
+[key] {
+    font-family: 'Courier New', Courier, monospace;
     color: black;
     background: white;
     padding: 0.5rem 1rem;
@@ -166,6 +172,7 @@ body {
     border-radius: 2rem;
     margin: 1.5rem;
     display: inline-block;
+    cursor: pointer;
     box-shadow: inset -0.25rem -0.5rem 1rem 0 rgba(0,0,0,0.5), 0 0 2rem 1rem rgba(0,0,0,0.5);
     animation: 0.5s ease-out fromBottom 1;
 }
@@ -178,7 +185,7 @@ body {
 
 [ref='landing'] [ref='logo'] {
     width: 80%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.45);
     box-shadow: 0 0 3rem 2rem rgba(0,0,0,0.5);
     animation: 0.5s ease-out fromTop 1;
 }
@@ -211,6 +218,17 @@ body {
 [btn][green] {
     background-color: #3a3;
     border: 0.1rem solid #181;
+}
+
+[btn][yellow] {
+    background: #aa3;
+    border: 0.1rem solid #881;
+}
+
+[btn][disabled] {
+    background-color: #aaa;
+    border: 0.1rem solid #888;
+    cursor: not-allowed;
 }
 
 [ref='canvas'] {

@@ -1,20 +1,32 @@
 var bind = (function() {
     var global = {};
+    var references = {};
+    var methods = {
+        'value': 'body',
+        'enable-if': 'enable',
+        'disable-if': 'disable',
+        'show-if': 'show',
+        'hide-if': 'hide'
+    };
 
     document.body.context = global;
 
-    function parse(exp, el, ctx) {
-        try {
-            return eval('(function($el, model) { return ' + exp + '})(el, ctx)');
-        } catch(e) {
-            showError('Eval Error', e);
+    function get(key, obj) {
+        obj = obj || global;
+
+        var parts = key.split('.');
+
+        if (parts.length === 1) {
+            var target = obj[key];
+
+            return target instanceof Function ? target(global) : target;
         }
+
+        return get(parts.slice(1).join('.'), obj[parts[0]]);
     }
 
-    var references = {};
-
     function elem(el) {
-        if (!el) return showError('Must pass Element, passed: ', el);
+        if (!el) return null;
 
         el.showListeners = el.showListeners || [];
         var newElem = {
@@ -24,37 +36,53 @@ var bind = (function() {
                 return el.value;
             },
             body: function(b) {
-                if (b) el.innerHTML = b;
+                if (b instanceof Function) return el._body = b.bind(newElem);
+                if (b !== undefined && b !== el.innerHTML) el.innerHTML = b;
                 return el.innerHTML;
             },
-            eval: function(ctx) {
-                ctx = ctx || newElem.context();
-                var validator = el.getAttribute('if');
-                var expression = el.getAttribute('eval');
+            eval: function() {
+                for (var method in methods) {
+                    var attr = el.getAttribute(method);
 
-                if (validator) {
-                    if (!parse(validator, el, ctx)) return newElem.hide();
-                    newElem.show();
-                }
-
-                if (expression) {
-                    var val = parse(expression, el, ctx);
-                    el.innerHTML = val;
-                    el.value = val;
+                    if (attr) {
+                        newElem[methods[method]](get(attr));
+                    }
                 }
 
                 slice(el.children).map(elem).forEach(function(el) {
-                    el.eval(ctx);
+                    el.eval();
                 });
             },
-            hide: function() {
-                el.setAttribute('hide', '');
+            hide: function(should) {
+                if (should || should === undefined) {
+                    el.setAttribute('hide', '');
+                } else {
+                    newElem.show();
+                }
             },
-            show: function(lastContext) {
-                el.showListeners.forEach(function(listener) {
-                    listener(lastContext);
-                });
-                el.removeAttribute('hide');
+            show: function(should) {
+                if (should || should === undefined) {
+                    el.showListeners.forEach(function(listener) {
+                        listener();
+                    });
+                    el.removeAttribute('hide');
+                } else {
+                    newElem.hide();
+                }
+            },
+            disable: function(should) {
+                if (should || should === undefined) {
+                    el.setAttribute('disabled', '');
+                } else {
+                    newElem.enable();
+                }
+            },
+            enable: function(should) {
+                if (should || should === undefined) {
+                    el.removeAttribute('disabled');
+                } else {
+                    newElem.disable();
+                }
             },
             ref: function(sub) {
                 if (sub) return ref(sub, el);
@@ -78,40 +106,43 @@ var bind = (function() {
             },
             on: function(event, listener) {
                 if (event === 'show') {
-                    el.showListeners.push(listener.bind(newElem));
+                    el.showListeners.push(listener.bind(newElem, global));
                 } else {
-                    el.addEventListener(event, listener.bind(newElem));
+                    el.addEventListener(event, listener.bind(newElem, global));
                 }
             },
             get: function(attr) {
                 return el.getAttribute(attr);
             },
+            // only used for app
             context: function() {
-                return el.context || elem(el.parentElement).context();
+                return global;
             },
             model: function(key, value) {
-                if (!el.context) {
-                    var ctx = function() {};
-                    ctx.prototype = elem(el.parentElement).context();
-                    el.context = new ctx();
-                }
-
-                el.context[key] = value;
-
-                if(value instanceof Function) {
-                    el.context[key] = value.bind(newElem);
-                } else {
-                    newElem.eval()
-                }
+                global[key] = value;
+                newElem.eval();
+                ref.self.saveState();
             },
             navTo: function(url) {
-                updateRoute(url, el.context);
+                updateRoute(url, global);
             },
-            saveState: function(data) {
-                localStorage.setItem(newElem.ref(), JSON.stringify(data));
+            saveState: function() {
+                localStorage.setItem(ref.self.get('ref'), JSON.stringify(global));
             },
-            loadState: function() {
-                return JSON.parse(localStorage.getItem(newElem.ref()) || 'null');
+            loadState: function(fn) {
+                var state = JSON.parse(localStorage.getItem(ref.self.get('ref')) || 'null');
+
+                if (state) {
+                    for (key in state) {
+                        global[key] = state[key];
+                    }
+                }
+
+                if (fn) {
+                    fn(global);
+                }
+
+                return state;
             }
         };
 
@@ -171,7 +202,7 @@ var bind = (function() {
             }
         });
 
-        lastRoute = location.hash.slice(1);
+        global.route = lastRoute = location.hash.slice(1);
     }
 
     var templates = {};
@@ -189,9 +220,9 @@ var bind = (function() {
     }
 
     function applyListeners() {
-        $$('[on-click]').forEach(function(el) {
+        $$('[action]').forEach(function(el) {
             el.on('click', function(e) {
-                parse(el.get('on-click'), el, el.context());
+                global[el.get('action')](el.get('value') || el.get('ref'), global);
             });
         });
     }

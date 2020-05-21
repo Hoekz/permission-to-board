@@ -1,11 +1,14 @@
 var api = (function() {
-    var baseUrl = 'https://us-central1-permission-to-board.cloudfunctions.net/';
+    var baseUrl = location.href.indexOf('localhost') > -1
+        ? 'http://localhost:1234/permission-to-board/us-central1/'
+        : 'https://us-central1-permission-to-board.cloudfunctions.net/';
     var loading = bind('loading');
 
     function parameterize(params) {
         var urlParams = [];
 
         for (var key in params) {
+            if (params[key] instanceof Object || key === 'route') continue;
             urlParams.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
         }
 
@@ -39,3 +42,15 @@ var api = (function() {
         return promise;
     }
 })();
+
+[
+    'createGame', 'joinGame', 'startGame',
+    'takeCard', 'drawCard', 'playPath', 'skipTurn'
+]
+.forEach(function(action) {
+    api[action] = function(params) {
+        return api(action, params).catch(function(e) {
+            showError('Error during ' + action + ':', e);
+        });
+    };
+});

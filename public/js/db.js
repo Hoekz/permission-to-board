@@ -10,7 +10,9 @@ var db = (function() {
                     deck: game.child('display'),
                     players: game.child('players'),
                     board: game.child('board'),
-                    key: id
+                    key: id,
+                    toJSON: function() {},
+                    toString: function() { return id; }
                 }) : resolve(null);
             });
         });
