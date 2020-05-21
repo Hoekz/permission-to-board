@@ -1,12 +1,15 @@
-var db = require("firebase-admin").database();
-
-function Err(msg) {
-    this.message = msg;
-}
+const { endGame } = require('./end-game');
+const { Err } = require('./utility');
 
 function mine() {
-    if (this.request.game.current.player !== this.request.user.uid) {
+    const game = this.request.game;
+
+    if (game.players[game.current.player].uid !== this.request.user.uid) {
         throw new Err('It is not your turn!');
+    }
+
+    if (game.started === 'finished') {
+        throw new Err('The game is over!');
     }
 
     return this.request.game.current.action;
@@ -25,30 +28,28 @@ function cardFromDeck(game) {
 }
 
 function take(action) {
-    let game = this.request.game;
-
-    if (game.current.action > 1) {
+    if (action > 1) {
         throw new Err('Cannot pick up after previous action.');
     }
-
-    let slot = parseInt(this.request.query.slot);
-
+    
+    const slot = parseInt(this.request.query.slot);
+    
     if (isNaN(slot) || slot < 1 || slot > 5) {
         throw new Err('Invalid slot to choose card from.');
     }
+    
+    const game = this.request.game;
+    const card = game.display['slot-' + slot];
 
-    let card = game.display['slot-' + slot];
-
-    if (card === 'locomotive' && game.current.action) {
+    if (card === 'locomotive' && action) {
         throw new Err('Cannot choose locomotive on second draw.');
     }
 
-    game.ref.child(`players/${game.current.player}/hand/${card}`)
-    .set(game.players[game.current.player].hand[card] + 1);
+    game.ref.child(`players/${game.current.player}/hand/${card}`).set(game.players[game.current.player].hand[card] + 1);
 
     game.ref.child(`display/slot-${slot}`).set(cardFromDeck(game));
 
-    if (card === 'locomotive' || game.current.action) {
+    if (card === 'locomotive' || action) {
         skip.call(this);
     } else {
         game.ref.child('current/action').set(1);
@@ -58,18 +59,16 @@ function take(action) {
 }
 
 function draw(action) {
-    let game = this.request.game;
-
-    if (game.current.action > 1) {
+    if (action > 1) {
         throw new Err('Cannot draw after previous action.');
     }
 
-    let card = cardFromDeck(game);
+    const game = this.request.game;
+    const card = cardFromDeck(game);
 
-    game.ref.child(`players/${game.current.player}/hand/${card}`)
-    .set(game.players[game.current.player].hand[card] + 1);
+    game.ref.child(`players/${game.current.player}/hand/${card}`).set(game.players[game.current.player].hand[card] + 1);
 
-    if (game.current.action === 1) {
+    if (action === 1) {
         skip.call(this);
     } else {
         game.ref.child('current/action').set(1);
@@ -83,12 +82,10 @@ function play(action) {
         throw new Err('Cannot play after previous action.');
     }
 
-    let game = this.request.game;
-    let choice = this.request.query;
-
-    let path = game.board.connections.find(function(c) {
-        return c.start === choice.start && c.end === choice.end;
-    });
+    const game = this.request.game;
+    const choice = this.request.query;
+    const path = game.board.connections.find(c => c.start === choice.start && c.end === choice.end);
+    const index = game.board.connections.indexOf(path);
 
     if (!path) {
         throw new Err(`No path exists between ${choice.start} and ${choice.end}`);
@@ -98,12 +95,19 @@ function play(action) {
         throw new Err('Path is already taken.');
     }
 
+    const isDouble = game.board.connections.find(c => c.start === choice.end && c.end === choice.start);
+
+    if (isDouble && isDouble.occupant === game.current.player) {
+        throw new Err('You cannot take both paths between 2 cities.');
+    }
+
     if (path.color !== 'any') {
         choice.color = path.color;
     }
 
-    let hand = game.players[game.current.player].hand;
-    let refHand = game.ref.child(`players/${game.current.player}/hand/`)
+    const player = game.players[game.current.player];
+    const hand = player.hand;
+    const refHand = game.ref.child(`players/${game.current.player}/hand/`);
 
     if (hand[choice.color] + hand.locomotive < path.length) {
         throw new Err('You do not have enough to play here.');
@@ -115,37 +119,42 @@ function play(action) {
         }
 
         refHand.child('locomotive').set(hand.locomotive - path.length);
-        return skip(null);
+        game.ref.child(`board/connections/${index}/occupant`).set(game.current.player);
+        skip.call(this);
+        return this.response.end('{"success": "route played."}');
     }
 
-    path.length -= hand[choice.color];
-
-    if (path.length > 0) {
-        hand.locomotive -= path.length;
+    if (path.length  > hand[choice.color]) {
+        hand.locomotive -= path.length - hand[choice.color];
         hand[choice.color] = 0;
     } else {
-        hand[choice.color] = -path.length;
+        hand[choice.color] -= path.length;
     }
+
+    player.trains -= path.length;
 
     refHand.child('locomotive').set(hand.locomotive);
     refHand.child(choice.color).set(hand[choice.color]);
-
-    return skip(null);
+    refHand.parent().child('trains').set(player.trains);
+    game.ref.child(`board/connections/${index}/occupant`).set(game.current.player);
+    skip.call(this);
+    this.response.end('{"success": "route played."}');
 }
 
-function skip(action) {
-    let ref = this.request.game.ref;
+function skip() {
+    const game = this.request.game;
+    const next = (game.order.indexOf(game.current.player) + 1) % game.order.length;
 
-    let i = this.request.game.order.indexOf(this.request.game.current.color) + 1;
-
-    if (i === this.request.game.order.length) {
-        i = 0;
+    if (game.players[game.current.player].lastTurn) {
+        return endGame(game);
     }
 
-    let nextPlayer = this.request.game.order[i];
-
-    ref.child('current').set({
-        player: nextPlayer,
+    if (game.players[game.current.player].trains < 3) {
+        game.ref.child(`players/${game.current.player}/lastTurn`).set(true);
+    }
+    
+    game.ref.child('current').set({
+        player: game.order[next],
         action: 0
     });
 }

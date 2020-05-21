@@ -1,11 +1,10 @@
-let colors = ['red', 'yellow', 'green', 'blue', 'black'];
+const { Err } = require('./utility');
 
-function Err(msg) {
-    this.message = msg;
-}
+const colors = ['red', 'yellow', 'green', 'blue', 'black'];
 
 function createPlayer(user) {
     return {
+        uid: user.uid,
         name: user.name,
         hand: {
             red: 0,
@@ -31,7 +30,7 @@ function joinGame() {
         throw new Err('You cannot join a game that has already begun.');
     }
 
-    if (colors.indexOf(color) < 0) {
+    if (!colors.includes(color)) {
         throw new Err(`You must choose an one of ${colors}.`);
     }
 
@@ -39,12 +38,9 @@ function joinGame() {
         throw new Err('This color is already taken.');
     }
 
-    let players = game.ref.child('players');
-
-    players.child(user.uid).set(createPlayer(user));
-    players.child(color).set(user.uid);
+    game.ref.child('players').child(color).set(createPlayer(user));
 
     this.response.end(JSON.stringify({success: true}));
 }
 
-module.exports = { createPlayer, joinGame };
+module.exports = { createPlayer, joinGame, colors };

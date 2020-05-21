@@ -1,22 +1,19 @@
-let { cardFromDeck } = require('./actions');
+const { cardFromDeck } = require('./actions');
 
-let colors = ['red', 'yellow', 'green', 'blue', 'black'];
+const HAND_SIZE = 4;
 
 function startGame() {
-    let game = this.request.game;
+    const game = this.request.game;
+    const order = randomPlayerOrder(Object.keys(game.players));
 
-    let players = randomPlayerOrder(Object.keys(game.players).filter(function(id) {
-        return colors.indexOf(id) > -1;
-    }));
-
-    game.ref.child('order').set(players);
+    game.ref.child('order').set(order);
 
     game.ref.child('current').set({
-        player: players[0],
+        player: order[0],
         action: 0
     });
 
-    distributeHands(players, game);
+    distributeHands(order, game);
     layoutCardChoices(game);
     start(game);
 
@@ -50,7 +47,9 @@ function distributeHands(players, game) {
             locomotive: 0
         };
 
-        for(let i = 0; i < 4; i++) hand[cardFromDeck(game)]++;
+        for(let i = 0; i < HAND_SIZE; i++) {
+            hand[cardFromDeck(game)]++;
+        }
 
         game.ref.child(`players/${game.players[player]}/hand`).set(hand);
     });

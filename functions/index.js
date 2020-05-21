@@ -1,80 +1,35 @@
-let functions = require('firebase-functions');
-let admin = require("firebase-admin");
-let serviceAccount = require("./secure/credentials.json");
+const functions = require('firebase-functions');
+const admin = require("firebase-admin");
+const serviceAccount = require("./secure/credentials.json");
 // Initialize the app with a custom auth variable, limiting the server's access
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://permission-to-board.firebaseio.com"
 });
 
-let { cors, auth, game, error } = require('./utility');
-let { createGame } = require('./create-game');
-let { joinGame } = require('./join-game');
-let { startGame } = require('./start-game');
-let actions = require('./actions');
+const { cors, auth, game, error } = require('./utility');
+const { createGame } = require('./create-game');
+const { joinGame } = require('./join-game');
+const { startGame } = require('./start-game');
+const actions = require('./actions');
 
-exports.createGame = functions.https.onRequest((request, response) => {
-    Promise.resolve()
-    .then(cors.bind({ request, response }))
-    .then(auth.bind(request))
-    .then(createGame.bind({ request, response }))
-    .catch(error.bind(response));
-});
+const requireAuth = (...methods) => functions.https.onRequest((request, response) =>
+    methods.reduce(
+        (promise, method) => promise.then(method.bind({ request, response })
+    ), Promise.resolve()
+        .then(cors.bind({ request, response }))
+        .then(auth.bind(request))
+    ).catch(error.bind(response))
+);
 
-exports.joinGame = functions.https.onRequest((request, response) => {
-    Promise.resolve()
-    .then(cors.bind({ request, response }))
-    .then(auth.bind(request))
-    .then(game.bind({ request }))
-    .then(joinGame.bind({ request, response }))
-    .catch(error.bind(response));
-});
+const withGame = (...methods) => requireAuth(game, ...methods);
 
-exports.startGame = functions.https.onRequest((request, response) => {
-    Promise.resolve()
-    .then(cors.bind({ request, response }))
-    .then(auth.bind(request))
-    .then(game.bind({ request }))
-    .then(startGame.bind({ request, response }))
-    .catch(error.bind(response))
-});
+const onMyTurn = (...methods) => withGame(actions.mine, ...methods);
 
-exports.takeCard = functions.https.onRequest((request, response) => {
-    Promise.resolve()
-    .then(cors.bind({ request, response }))
-    .then(auth.bind(request))
-    .then(game.bind({ request }))
-    .then(actions.mine.bind({ request, response }))
-    .then(actions.take.bind({ request, response }))
-    .catch(error.bind(response));
-});
-
-exports.drawCard = functions.https.onRequest((request, response) => {
-    Promise.resolve()
-    .then(cors.bind({ request, response }))
-    .then(auth.bind(request))
-    .then(game.bind({ request }))
-    .then(actions.mine.bind({ request, response }))
-    .then(actions.draw.bind({ request, response }))
-    .catch(error.bind(response));
-});
-
-exports.playPath = functions.https.onRequest((request, response) => {
-    Promise.resolve()
-    .then(cors.bind({ request, response }))
-    .then(auth.bind(request))
-    .then(game.bind({ request }))
-    .then(actions.mine.bind({ request, response }))
-    .then(actions.play.bind({ request, response }))
-    .catch(error.bind(response));
-});
-
-exports.skipTurn = functions.https.onRequest((request, response) => {
-    Promise.resolve()
-    .then(cors.bind({ request, response }))
-    .then(auth.bind(request))
-    .then(game.bind({ request }))
-    .then(actions.mine.bind({ request, response }))
-    .then(actions.skip.bind({ request, response }))
-    .catch(error.bind(response));
-});
+exports.createGame = requireAuth(createGame);
+exports.joinGame = withGame(joinGame);
+exports.startGame = withGame(startGame);
+exports.takeCard = onMyTurn(actions.take);
+exports.drawCard = onMyTurn(actions.draw);
+exports.playPath = onMyTurn(actions.play);
+exports.skipTurn = onMyTurn(actions.skip);

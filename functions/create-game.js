@@ -1,5 +1,6 @@
 var db = require("firebase-admin").database();
-var { createPlayer } = require('./join-game');
+const { Err } = require('./utility');
+var { createPlayer, colors } = require('./join-game');
 
 var randInt = (max) => Math.floor(Math.random() * max);
 
@@ -234,14 +235,45 @@ function originalMap() {
     return { points: cities, connections, size };
 }
 
-function initGame(user, query) {
-    var players = {};
-    players[user.uid] = createPlayer(user);
-    players[query.color] = user.uid;
+function originalRoutes() {
+    return [
+        {start: 'denver', end: 'el paso', worth: 4},
+        {start: 'kansas city', end: 'houston', worth: 5},
+        {start: 'new york', end: 'atlanta', worth: 6},
+        {start: 'calgary', end: 'salt lake city', worth: 7},
+        {start: 'chicago', end: 'new orleans', worth: 7},
+        {start: 'duluth', end: 'houston', worth: 8},
+        {start: 'helena', end: 'los angeles', worth: 8},
+        {start: 'sault st marie', end: 'nashville', worth: 8},
+        {start: 'sault st marie', end: 'oklahoma city', worth: 9},
+        {start: 'chicago', end: 'santa fe', worth: 9},
+        {start: 'montreal', end: 'atlanta', worth: 9},
+        {start: 'seattle', end: 'los angeles', worth: 9},
+        {start: 'toronto', end: 'miami', worth: 10},
+        {start: 'duluth', end: 'el paso', worth: 10},
+        {start: 'winnipeg', end: 'little rock', worth: 11},
+        {start: 'denver', end: 'pittsburgh', worth: 11},
+        {start: 'boston', end: 'miami', worth: 12},
+        {start: 'montreal', end: 'new orleans', worth: 13},
+        {start: 'calgary', end: 'phoenix', worth: 13},
+        {start: 'vancouver', end: 'santa fe', worth: 13},
+        {start: 'los angeles', end: 'chicago', worth: 16},
+        {start: 'san francisco', end: 'atlanta', worth: 17},
+        {start: 'portland', end: 'nashville', worth: 17},
+        {start: 'vancouver', end: 'montreal', worth: 20},
+        {start: 'los angeles', end: 'miami', worth: 20},
+        {start: 'los angeles', end: 'new york', worth: 21},
+        {start: 'seattle', end: 'new york', worth: 4},
+    ];
+}
 
+function initGame(user, color) {
     return {
         board: originalMap(),
-        players: players,
+        routes: originalRoutes(),
+        players: {
+            [color]: createPlayer(user),
+        },
         deck: {
             red: 12,
             orange: 12,
@@ -257,9 +289,16 @@ function initGame(user, query) {
 }
 
 function createGame(user) {
+    const color = this.request.query.color;
+
+    if (!colors.includes(color)) {
+        throw new Err(`You must choose an one of ${colors}.`);
+    }
+
     var key = createGameKey();
-    db.ref(`/${key}`).set(initGame(user, this.request.query));
-    this.response.end(JSON.stringify({id: key}));
+    db.ref(`/${key}`).set(initGame(user, color));
+
+    this.response.end(JSON.stringify({ id: key }));
 }
 
 module.exports = { createGame };
