@@ -118,6 +118,20 @@
           ".validate": "newData.isNumber()"
         }
       },
+      "routes": {
+        ".read": "false",
+        "$route": {
+          "start": {
+            ".validate": "newData.isString()"
+          },
+          "end": {
+            ".validate": "newData.isString()"
+          },
+          "worth": {
+            ".validate": "newData.isNumber()"
+          }
+        }
+      },
       "display": {
         "slot-1": {
           ".validate": "root.child('colors').hasChild(newData.val())"

@@ -14,6 +14,10 @@ class Err {
     }
 }
 
+function rand(max) {
+    return Math.floor(max * Math.random());
+}
+
 function cors() {
     return new Promise((resolve, reject) => {
         corsConfig(this.request, this.response, (err) => {
@@ -65,4 +69,4 @@ function error(err) {
     this.end(JSON.stringify(err));
 }
 
-module.exports = { cors, auth, game, error, Err };
+module.exports = { cors, auth, game, error, Err, rand };

@@ -29,6 +29,8 @@ const onMyTurn = (...methods) => withGame(actions.mine, ...methods);
 exports.createGame = requireAuth(createGame);
 exports.joinGame = withGame(joinGame);
 exports.startGame = withGame(startGame);
+exports.getRoutes = onMyTurn(actions.getRoutes);
+exports.chooseRoutes = onMyTurn(actions.chooseRoutes);
 exports.takeCard = onMyTurn(actions.take);
 exports.drawCard = onMyTurn(actions.draw);
 exports.playPath = onMyTurn(actions.play);

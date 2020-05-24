@@ -1,3 +1,4 @@
+const { rand } = require('./utility');
 const { cardFromDeck } = require('./actions');
 
 const HAND_SIZE = 4;
@@ -10,8 +11,11 @@ function startGame() {
 
     game.ref.child('current').set({
         player: order[0],
-        action: 0
+        action: 2
     });
+
+    game.ref.child(`players/${order[0]}/routes`).set(game.routes.slice(0, 3));
+    game.ref.child('routes').set(game.routes.slice(3));
 
     distributeHands(order, game);
     layoutCardChoices(game);
@@ -21,16 +25,16 @@ function startGame() {
 }
 
 function randomPlayerOrder(players) {
-    let original = players.slice();
-    let random = [];
+    const original = players.slice();
+    const randomized = [];
 
     while (original.length) {
-        let i = Math.floor(Math.random() * original.length);
-        random.push(original[i]);
+        const i = rand(original.length);
+        randomized.push(original[i]);
         original.splice(i, 1);
     }
 
-    return random;
+    return randomized;
 }
 
 function distributeHands(players, game) {

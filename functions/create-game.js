@@ -1,8 +1,6 @@
 var db = require("firebase-admin").database();
-const { Err } = require('./utility');
+const { Err, rand } = require('./utility');
 var { createPlayer, colors } = require('./join-game');
-
-var randInt = (max) => Math.floor(Math.random() * max);
 
 function createGameKey() {
     var charset = [
@@ -11,7 +9,7 @@ function createGameKey() {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     ];
 
-    return [0,0,0,0].map(() => charset[randInt(20)]).join('-');
+    return [0,0,0,0].map(() => charset[rand(charset.length)]).join('-');
 }
 
 /* TODO: Procedural generation of maps
@@ -236,7 +234,7 @@ function originalMap() {
 }
 
 function originalRoutes() {
-    return [
+    const routes = [
         {start: 'denver', end: 'el paso', worth: 4},
         {start: 'kansas city', end: 'houston', worth: 5},
         {start: 'new york', end: 'atlanta', worth: 6},
@@ -265,6 +263,16 @@ function originalRoutes() {
         {start: 'los angeles', end: 'new york', worth: 21},
         {start: 'seattle', end: 'new york', worth: 4},
     ];
+
+    const randomized = [];
+
+    while (routes.length) {
+        const i = rand(routes.length);
+        randomized.push(routes[i]);
+        routes.splice(i, 1);
+    }
+
+    return randomized;
 }
 
 function initGame(user, color) {
