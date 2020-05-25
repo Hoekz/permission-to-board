@@ -53,11 +53,6 @@ function game() {
 
             game.ref = ref;
 
-            if (game.current) {
-                game.current.color = game.current.player;
-                game.current.player = game.players[game.current.color];
-            }
-
             return resolve(game);            
         });
     });

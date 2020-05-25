@@ -2,7 +2,7 @@ var api = (function() {
     var baseUrl = location.href.indexOf('localhost') > -1
         ? 'http://localhost:1234/permission-to-board/us-central1/'
         : 'https://us-central1-permission-to-board.cloudfunctions.net/';
-    var loading = bind('loading');
+    var loading = $$('[loading]')[0];
 
     function parameterize(params) {
         var urlParams = [];
@@ -21,7 +21,7 @@ var api = (function() {
 
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
-            loading.hide();
+            loading.setAttribute('hide', '');
             try {
                 resolve(JSON.parse(xhr.responseText));
             } catch(e) {
@@ -29,7 +29,7 @@ var api = (function() {
             }
         };
 
-        loading.show();
+        loading.removeAttribute('hide');
 
         authorize().then(function(user) {
             return user.getToken();
@@ -45,7 +45,7 @@ var api = (function() {
 
 [
     'createGame', 'joinGame', 'startGame',
-    'takeCard', 'drawCard', 'playPath', 'skipTurn'
+    'takeCard', 'drawCard', 'playPath', 'skipTurn', 'getRoutes', 'chooseRoutes'
 ]
 .forEach(function(action) {
     api[action] = function(params) {

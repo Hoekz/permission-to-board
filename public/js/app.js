@@ -3,9 +3,16 @@ bind.on('ready', function() {
 
     function watchGame(game) {
         app.model('game', game);
+        var players, board, scores;
+
+        game.board.on('value', function(snapshot) {
+            app.model('board', board = snapshot.val());
+
+            app.model('scores', scores = calculateScores(board, players));
+        });
 
         game.players.on('value', function(snapshot) {
-            app.model('players', snapshot.val());
+            app.model('players', players = snapshot.val());
         });
     };
 

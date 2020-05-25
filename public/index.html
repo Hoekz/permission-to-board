@@ -17,15 +17,13 @@
     <script defer src="/__/firebase/3.8.0/firebase-database.js"></script>
     <script defer src="/__/firebase/init.js"></script>
 
-    <script defer src="js/bind.js"></script>
+    <script defer src="js/router.js"></script>
     <script defer src="js/authorize.js"></script>
     <script defer src="js/api.js"></script>
     <script defer src="js/db.js"></script>
     <script defer src="js/calc.js"></script>
     <script defer src="js/draw.js"></script>
-    <script defer src="js/show-game.js"></script>
-    <script defer src="js/show-error.js"></script>
-    <script defer src="js/app.js"></script>
+    <script defer src="js/game.js"></script>
 
     <link rel="manifest" href="manifest.json">
     <link href="css/colors.css" rel="stylesheet"/>
@@ -36,105 +34,72 @@
         Please Rotate Your Device
     </div>
     <div landscape>
-        <div ref="landing" route default>
+        <div route="/landing">
             <img ref="logo" src="img/title.png"/>
-            <button ref="create" nav-to="/create/color" btn blue>Create New Game</button>
-            <button ref="join" nav-to="/join/find" btn green>Join Existing Game</button>
-            <button ref="host" nav-to="/display/find" btn yellow desktop>Host Existing Game</button>
+            <button nav-to="/create/color" btn blue>Create New Game</button>
+            <button nav-to="/join/find" btn green>Join Existing Game</button>
+            <button nav-to="/display/find" btn yellow desktop>Host Existing Game</button>
         </div>
-        <div ref="create" route>
-            <div ref="color" template route></div>
-            <div ref="share" route>
+        <div route="/create">
+            <div route="/create/color">
+                <div header>Choose Token Color</div>
+                <div tokens></div>
+            </div>
+            <div route="/create/share">
                 <div header>Share Your Game Key</div>
-                <div key value="shareableKey"></div>
-                <button ref="start" btn blue enable-if="enoughPlayers">Start Game</button>
-                <div ref="players" template></div>
+                <div key></div>
+                <button btn blue disabled>Start Game</button>
+                <div players></div>
             </div>
         </div>
-        <div ref="join" route>
-            <div ref="find" template route></div>
-            <div ref="color" template route></div>
-            <div ref="share" route>
+        <div route="/join" join>
+            <div route="/join/find">
+                <div header>Enter Your Game Key</div>
+                <input search type="text" placeholder="Game Key" maxlength="4"/>
+                <button btn blue disabled find>Find</button>
+            </div>
+            <div route="/join/color">
+                <div header>Choose Token Color</div>
+                <div tokens></div>
+            </div>
+            <div route="/join/share">
                 <div header>Share Your Game Key</div>
-                <div key value="shareableKey"></div>
-                <div ref="start">The creator of the game will start it shortly.</div>
-                <div ref="players" template></div>
+                <div key></div>
+                <div>The creator of the game will start it shortly.</div>
+                <div players></div>
             </div>
         </div>
-        <div ref="game" route>
-            <div ref="state" template></div>
-            <div ref="nav">
+        <div route="/game">
+            <canvas board></canvas>
+            <div players></div>
+            <div routes choose></div>
+            <div nav>
                 <button nav-to="/game/hand" btn green>Hand</button>
                 <button nav-to="/game/deck" btn green>Deck</button>
                 <button nav-to="/game" btn blue>Board</button>
             </div>
-            <div ref="hand" route></div>
-            <div ref="deck" route></div>
+            <div route="/game/hand" hand></div>
+            <div route="/game/deck" deck></div>
+            <div route="/game/routes" routes view></div>
         </div>
-        <div ref="display" route>
-            <div ref="find" template route></div>
-            <div ref="state" template route></div>
+        <div route="/display" display>
+            <div route="/display/find">
+                <div header>Enter Your Game Key</div>
+                <input search type="text" placeholder="Game Key" maxlength="4"/>
+                <button btn blue disabled find>Find</button>
+            </div>
+            <div route="/display/game">
+                <canvas board></canvas>
+                <div players></div>
+                <div deck></div>
+            </div>
         </div>
     </div>
-    <div ref="loading" hide>
+    <div loading hide>
         <div></div>
         <div></div>
         <div></div>
     </div>
-    <div ref="error-log" route></div>
+    <div errors route></div>
 </body>
-<script type="template" ref="color">
-    <div header>Choose Token Color</div>
-    <div ref="tokens">
-        <button red token ref="red" action="choose" hide-if="players.red"></button>
-        <button yellow token ref="yellow" action="choose" hide-if="players.yellow"></button>
-        <button green token ref="green" action="choose" hide-if="players.green"></button>
-        <button blue token ref="blue" action="choose" hide-if="players.blue"></button>
-        <button black token ref="black" action="choose" hide-if="players.black"></button>
-    </div>
-</script>
-<script type="template" ref="find">
-    <div header>Enter Your Game Key</div>
-    <input key ref="key" type="text" placeholder="Game Key" maxlength="4"/>
-    <button ref="check" btn blue>Find</button>
-    <div ref="error" show-if="error">Cannot find game. Try again.</div>
-</script>
-<script type="template" ref="state">
-    <canvas ref="canvas"></canvas>
-    <div ref="turn"></div>
-    <div ref="players" template></div>
-    <div ref="scores"></div>
-    <div ref="selected" show-if="selected">
-        <div>From: <span value="selected.from"></span></div>
-        <div>To: <span value="selected.to"></span></div>
-        <div>Requires: <span value="selected.requires"></span></div>
-    </div>
-</script>
-<script type="template" ref="players">
-    <div show-if="players.red">
-        <div red token></div>
-        <div value="players.red.name"></div>
-        <div value="players.red.score"></div>
-    </div>
-    <div show-if="players.yellow">
-        <div yellow token></div>
-        <div value="players.yellow.name"></div>
-        <div value="players.yellow.score"></div>
-    </div>
-    <div show-if="players.green">
-        <div green token></div>
-        <div value="players.green.name"></div>
-        <div value="players.green.score"></div>
-    </div>
-    <div show-if="players.blue">
-        <div blue token></div>
-        <div value="players.blue.name"></div>
-        <div value="players.blue.score"></div>
-    </div>
-    <div show-if="players.black">
-        <div black token></div>
-        <div value="players.black.name"></div>
-        <div value="players.black.score"></div>
-    </div>
-</script>
 </html>

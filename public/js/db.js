@@ -1,19 +1,34 @@
 var db = (function() {
     var baseRef = firebase.database().ref('/');
+    var watching = null;
 
-    function getGame(id) {
-        return new Promise(function(resolve, reject) {
-            var game = baseRef.child(parseId(id));
+    function isGame(id) {
+        return new Promise(function(resolve) {
+            baseRef.child(parseId(id)).once('value', function(snapshot) {
+                resolve(snapshot.val() !== null);
+            });
+        });
+    }
 
-            game.once('value', function(snapshot) {
-                snapshot.val() ? resolve({
-                    deck: game.child('display'),
-                    players: game.child('players'),
-                    board: game.child('board'),
-                    key: id,
-                    toJSON: function() {},
-                    toString: function() { return id; }
-                }) : resolve(null);
+    function watchGame(id, onUpdate) {
+        if (watching) {
+            baseRef.child(watching).off();
+        }
+
+        watching = parseId(id);
+
+        baseRef.child(watching).on('value', function(snapshot) {
+            var game = snapshot.val();
+
+            onUpdate({
+                started: game.started,
+                key: watching,
+                order: game.order,
+                players: game.players,
+                slots: game.slots,
+                me: game.players.find(function(player) {
+                    return player;
+                })
             });
         });
     }
@@ -46,7 +61,8 @@ var db = (function() {
     }
 
     return {
-        getGame: getGame,
+        isGame: isGame,
+        watchGame: watchGame,
         parseId: parseId,
         simplifyId: simplifyId
     }
