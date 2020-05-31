@@ -6,7 +6,7 @@
       ".write": "false"
     },
     "$game": {
-      ".read": "auth != null",
+      ".read": "true",
       ".validate": "(!data.exists() && newData.hasChildren(['players', 'board', 'deck'])) || !newData.exists()",
       "started": {
         ".validate": "!data.exists() && newData.val() == 'fight!'"

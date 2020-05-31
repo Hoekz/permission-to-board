@@ -35,7 +35,7 @@ var router = (function() {
         }
 
         $$('[route]').forEach(function(el) {
-            if (el.getAttribute('route').indexOf(url) === 0) {
+            if (url.indexOf(el.getAttribute('route')) === 0) {
                 el.removeAttribute('hide');
             } else {
                 el.setAttribute('hide', '');

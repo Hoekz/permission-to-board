@@ -36,7 +36,7 @@ function take(action) {
         throw new Err('Cannot pick up after previous action.');
     }
     
-    const slot = parseInt(this.request.query.slot);
+    const slot = parseInt(this.request.query.slot.replace('slot-', ''));
     
     if (isNaN(slot) || slot < 1 || slot > 5) {
         throw new Err('Invalid slot to choose card from.');
@@ -124,7 +124,7 @@ function play(action) {
 
         game.ref.child('deck/locomotive').set(game.deck.locomotive + path.length);
         refHand.child('locomotive').set(hand.locomotive - path.length);
-        refHand.parent().child('trains').set(player.trains - path.length);
+        refHand.parent.child('trains').set(player.trains - path.length);
         game.ref.child(`board/connections/${index}/occupant`).set(game.current.player);
         skip.call(this);
         return this.response.end('{"success": "route played."}');
@@ -144,7 +144,7 @@ function play(action) {
 
     refHand.child('locomotive').set(hand.locomotive);
     refHand.child(choice.color).set(hand[choice.color]);
-    refHand.parent().child('trains').set(player.trains);
+    refHand.parent.child('trains').set(player.trains);
     game.ref.child(`board/connections/${index}/occupant`).set(game.current.player);
     skip.call(this);
     this.response.end('{"success": "route played."}');
@@ -170,7 +170,7 @@ function getRoutes(action) {
     }
 }
 
-function chooseRoutes() {
+function chooseRoutes(action) {
     if (action !== 2) {
         throw new Err('Cannot filter routes after previous action.');
     }

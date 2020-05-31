@@ -1,11 +1,46 @@
 var db = (function() {
     var baseRef = firebase.database().ref('/');
     var watching = null;
+    var user = null;
+
+    function loggedInAs() {
+        for (var i = 0; i < localStorage.length; i++) {
+            if (localStorage.key(i).indexOf('firebase:authUser') > -1) {
+                return JSON.parse(localStorage.getItem(localStorage.key(i)));
+            }
+        }
+    }
+
+    function simpleName(name) {
+        var parts = name.split(' ');
+        var last = parts.pop();
+
+        return parts.join(' ') + ' ' + last[0];
+    }
+
+    function mapPlayers(players) {
+        var mapped = {};
+
+        for (var color in players) {
+            mapped[color] = {
+                uid: players[color].uid,
+                name: simpleName(players[color].name),
+                color: color,
+                score: 0,
+                trains: players[color].trains,
+                hand: players[color].hand || {},
+                routes: players[color].routes
+            };
+        }
+
+        return mapped;
+    }
 
     function isGame(id) {
         return new Promise(function(resolve) {
             baseRef.child(parseId(id)).once('value', function(snapshot) {
-                resolve(snapshot.val() !== null);
+                var game = snapshot.val();
+                resolve(game);
             });
         });
     }
@@ -20,15 +55,29 @@ var db = (function() {
         baseRef.child(watching).on('value', function(snapshot) {
             var game = snapshot.val();
 
+            if (!game) {
+                return console.warn('Game not currently available');
+            }
+
+            user = user || loggedInAs();
+
+            console.log(game);
+
+            var mappedPlayers = mapPlayers(game.players);
+            var me = Object.values(mappedPlayers).find(function(player) {
+                return user && player.uid === user.uid;
+            });
+
             onUpdate({
                 started: game.started,
-                key: watching,
+                key: simplifyId(watching),
+                current: game.current,
+                board: game.board,
                 order: game.order,
-                players: game.players,
-                slots: game.slots,
-                me: game.players.find(function(player) {
-                    return player;
-                })
+                players: mappedPlayers,
+                slots: game.display,
+                me: me,
+                isMyTurn: me.color === game.current.player
             });
         });
     }

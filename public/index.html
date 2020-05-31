@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-status-bar-style" content="black" />
     <title>Permission to Board</title>
-    <link rel="shortcut icon" href="img/icon.png">
+    <link rel="shortcut icon" href="img/train-count.png">
 
     <script defer src="/__/firebase/3.8.0/firebase-app.js"></script>
     <script defer src="/__/firebase/3.8.0/firebase-auth.js"></script>
@@ -23,24 +23,25 @@
     <script defer src="js/db.js"></script>
     <script defer src="js/calc.js"></script>
     <script defer src="js/draw.js"></script>
+    <script defer src="js/drag.js"></script>
     <script defer src="js/game.js"></script>
 
     <link rel="manifest" href="manifest.json">
     <link href="css/colors.css" rel="stylesheet"/>
     <link href="css/style.css" rel="stylesheet"/>
 </head>
-<body hide ref="app">
+<body hide>
     <div portrait>
         Please Rotate Your Device
     </div>
     <div landscape>
-        <div route="/landing">
-            <img ref="logo" src="img/title.png"/>
+        <div route="/landing" landing>
+            <img logo src="img/title.png"/>
             <button nav-to="/create/color" btn blue>Create New Game</button>
             <button nav-to="/join/find" btn green>Join Existing Game</button>
             <button nav-to="/display/find" btn yellow desktop>Host Existing Game</button>
         </div>
-        <div route="/create">
+        <div route="/create" create>
             <div route="/create/color">
                 <div header>Choose Token Color</div>
                 <div tokens></div>
@@ -48,7 +49,7 @@
             <div route="/create/share">
                 <div header>Share Your Game Key</div>
                 <div key></div>
-                <button btn blue disabled>Start Game</button>
+                <button btn blue disabled start>Start Game</button>
                 <div players></div>
             </div>
         </div>
@@ -56,7 +57,7 @@
             <div route="/join/find">
                 <div header>Enter Your Game Key</div>
                 <input search type="text" placeholder="Game Key" maxlength="4"/>
-                <button btn blue disabled find>Find</button>
+                <button btn blue find>Find</button>
             </div>
             <div route="/join/color">
                 <div header>Choose Token Color</div>
@@ -69,15 +70,17 @@
                 <div players></div>
             </div>
         </div>
-        <div route="/game">
+        <div route="/game" game>
             <canvas board></canvas>
-            <div players></div>
             <div routes choose></div>
+            <div selected hide></div>
             <div nav>
-                <button nav-to="/game/hand" btn green>Hand</button>
+                <button nav-to="/game/scores" btn red>Scores</button>
+                <button nav-to="/game/hand" btn yellow>Hand</button>
                 <button nav-to="/game/deck" btn green>Deck</button>
-                <button nav-to="/game" btn blue>Board</button>
+                <button nav-to="/game/routes" btn blue>Routes</button>
             </div>
+            <div route="/game/scores" players></div>
             <div route="/game/hand" hand></div>
             <div route="/game/deck" deck></div>
             <div route="/game/routes" routes view></div>
@@ -86,7 +89,7 @@
             <div route="/display/find">
                 <div header>Enter Your Game Key</div>
                 <input search type="text" placeholder="Game Key" maxlength="4"/>
-                <button btn blue disabled find>Find</button>
+                <button btn blue find>Find</button>
             </div>
             <div route="/display/game">
                 <canvas board></canvas>
@@ -100,6 +103,6 @@
         <div></div>
         <div></div>
     </div>
-    <div errors route></div>
+    <div route="/errors" errors></div>
 </body>
 </html>

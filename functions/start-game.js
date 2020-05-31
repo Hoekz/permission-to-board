@@ -55,7 +55,7 @@ function distributeHands(players, game) {
             hand[cardFromDeck(game)]++;
         }
 
-        game.ref.child(`players/${game.players[player]}/hand`).set(hand);
+        game.ref.child(`players/${player}/hand`).set(hand);
     });
 }
 

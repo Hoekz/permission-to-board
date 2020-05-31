@@ -12,11 +12,16 @@ var dom = {
     routes: $$('[routes][view]'),
     routeOpts: $$('[routes][choose]'),
     deck: $$('[deck]'),
-    myTurn: $$('[is-my-turn]')
+    start: $$('[start]')[0],
+    selected: $$('[selected]')[0],
+    game: $$('[game]')[0],
 };
 
-function text(str) {
+function text(str, attr) {
     var el = document.createElement('span');
+    if (attr) {
+        el.setAttribute(attr, '');
+    }
     el.innerHTML = str;
     return el;
 }
@@ -33,7 +38,7 @@ function button(color, label, onClick) {
 }
 
 function token(color) {
-    var el = document.createElement('div');
+    var el = document.createElement('button');
 
     el.setAttribute('token', '');
     el.setAttribute(color, '');
@@ -41,12 +46,22 @@ function token(color) {
     return el;
 }
 
-function player(color, name, score, isCurrent) {
+function group(children) {
     var el = document.createElement('div');
 
-    el.appendChild(token(color));
-    el.appendChild(text(name));
-    el.appendChild(text(score));
+    children.forEach(function(child) {
+        el.appendChild(child);
+    });
+
+    return el;
+}
+
+function player(color, name, score, trains, isCurrent) {
+    var el = document.createElement('div');
+    el.setAttribute('player', '');
+
+    el.appendChild(group([token(color), text(name)]));
+    el.appendChild(group([text(score, 'score'), text(trains, 'train-count')]));
 
     if (isCurrent) {
         el.setAttribute('active', '');
@@ -61,7 +76,7 @@ function card(color, count) {
     el.setAttribute(color, '');
     el.setAttribute('card', '');
 
-    if (count) {
+    if (typeof count === 'number') {
         el.appendChild(text(count));
     }
 
@@ -87,9 +102,21 @@ function routeCard(start, end, worth, completed) {
     return el;
 }
 
+function newRouteCard() {
+    var el = document.createElement('div');
+    el.className = 'new route';
+
+    var worthEl = text('+');
+    worthEl.className = 'worth';
+
+    el.appendChild(worthEl);
+
+    return el;
+}
+
 function select(route, key) {
     if (!route) {
-        return;
+        return dom.selected.setAttribute('hide', '');
     }
 
     dom.selected.innerHTML = '';
@@ -98,20 +125,35 @@ function select(route, key) {
         api.playPath({ key: key, start: route.start, end: route.end });
     });
 
+    if (!db.currentGame.isMyTurn) {
+        play.setAttribute('disabled', '');
+    }
+
     var cancel = button('red', 'Cancel', function() {
         dom.selected.setAttribute('hide', '');
+        draw.highlight({ x: -10000, y: -10000 });
     });
 
     dom.selected.appendChild(text('From: ' + route.start));
     dom.selected.appendChild(text('To: ' + route.end));
     dom.selected.appendChild(text('Requires: ' + route.length + ' ' + route.color));
-    dom.selected.appendChild(play);
+    if (route.occupant) {
+        dom.selected.appendChild(text('Owner: ' + route.occupant));
+    } else {
+        dom.selected.appendChild(play);
+    }
     dom.selected.appendChild(cancel);
     dom.selected.removeAttribute('hide');
 }
 
+function notHidden(el) {
+    return el === document.body || (!el.hasAttribute('hide') && notHidden(el.parentElement));
+}
+
 var rendered = false;
 function onUpdate(game) {
+    db.currentGame = game;
+
     if (game.started) {
         dom.players.forEach(function(el) {
             el.innerHTML = '';
@@ -121,7 +163,7 @@ function onUpdate(game) {
                 var isCurrent = color === game.current.player;
                 var details = game.players[color];
     
-                el.appendChild(player(color, details.name, details.score, isCurrent))
+                el.appendChild(player(color, details.name, details.score, details.trains, isCurrent))
             }
         });
     
@@ -131,9 +173,11 @@ function onUpdate(game) {
             if (!game.me) {
                 return;
             }
+
+            var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'locomotive', 'black', 'white'];
     
-            for (var color in game.me.hand) {
-                el.appendChild(card(color, game.me.hand[color]));
+            for (var i = 0; i < colors.length; i++) {
+                el.appendChild(card(colors[i], game.me.hand[colors[i]] || 0));
             }
         });
 
@@ -151,6 +195,8 @@ function onUpdate(game) {
                     el.appendChild(routeCard(route.start, route.end, route.worth, route.completed));
                 }
             }
+
+            el.appendChild(newRouteCard());
         });
 
         dom.routeOpts.forEach(function(el) {
@@ -160,18 +206,20 @@ function onUpdate(game) {
 
             var needsToChoose = false;
             var chosen = [];
-            function toggle(route) {
+            function toggle(route, card) {
                 var found = false;
 
                 for(var i = 0; i < chosen.length; i++) {
                     if (chosen[i] === route) {
                         found = true;
                         chosen.splice(i, 1);
+                        card.className = 'route';
                         break;
                     }
                 }
 
                 if (!found) {
+                    card.className = 'chosen route';
                     chosen.push(route);
                 }
             }
@@ -183,10 +231,9 @@ function onUpdate(game) {
                 if (!route.chosen) {
                     needsToChoose = true;
                     var now = routeCard(route.start, route.end, route.worth);
-                    now.addEventListener('click', choose.bind(null, route));
+                    now.addEventListener('click', toggle.bind(null, route, now));
                     el.appendChild(now);
                 }
-
             }
 
             if (needsToChoose) {
@@ -195,36 +242,36 @@ function onUpdate(game) {
                         return alert('You have not chosen any routes.');
                     }
 
-                    if (!game.me.routes.length && chosen.length < 2) {
+                    if (game.me.routes.length < 4 && chosen.length < 2) {
                         return alert('You must choose at least 2 routes to start.');
                     }
 
-                    api.chooseRoutes({ key: game.key, routes: JSON.stringify(chosen) });
+                    api.chooseRoutes({ key: db.parseId(game.key), routes: JSON.stringify(chosen) });
                 }))
+            } else {
+                el.setAttribute('hide', '');
             }
         });
     
         dom.deck.forEach(function(el) {
             el.innerHTML = '';
     
-            var back = card('back');
-            back.addEventListener('click', api.drawCard.bind(null));
-            el.appendChild(back);
-    
             for (var slot in game.slots) {
                 var option = card(game.slots[slot]);
-                option.addEventListener('click', api.takeCard.bind(null, { key: game.key, slot: slot }));
+                option.addEventListener('click', api.takeCard.bind(null, { key: db.parseId(game.key), slot: slot }));
                 el.appendChild(option);
             }
+
+            var back = card('back');
+            back.addEventListener('click', api.drawCard.bind(null, { key: db.parseId(game.key) }));
+            el.appendChild(back);
         });
 
-        dom.isMyTurn.forEach(function(el) {
-            if (game.me && game.current && game.current.player !== game.me.color) {
-                el.setAttribute('hide', '');
-            } else {
-                el.removeAttribute('hide');
-            }
-        });
+        if (game.isMyTurn) {
+            dom.game.setAttribute('my-turn', '');
+        } else {
+            dom.game.removeAttribute('my-turn');
+        }
     } else {
         dom.tokens.forEach(function(el) {
             var key = game.key || dom.joinSearch.value;
@@ -237,31 +284,45 @@ function onUpdate(game) {
                 if (!(color in game.players)) {
                     var colorToken = token(color);
                     el.appendChild(colorToken);
-                    colorToken.addEventListener('click', api.joinGame.bind(null, { key: key, color: color }));
+                    colorToken.addEventListener('click', api.joinGame.bind(null, { key: db.parseId(key), color: color }));
                 }
             }
         });
+
+        dom.players.forEach(function(el) {
+            el.innerHTML = '';
+            
+            for(var color in game.players) {
+                var details = game.players[color];
     
-        dom.key.forEach(function(el) {
-            el.innerHTML = game.key;
+                el.appendChild(player(color, details.name, '', details.trains, false))
+            }
         });
+
+        if (Object.keys(game.players).length > 1) {
+            dom.start.removeAttribute('disabled');
+        }
     }
 
+    dom.key.forEach(function(el) {
+        el.innerHTML = game.key;
+    });
+
     dom.board.forEach(function(el) {
-        if (!rendered) {
-            el.addEventListener('click', function(e) {
-                select(draw.highlight({ x: e.clientX, y: e.clientY }), game.key);
-            });
+        if (!rendered && notHidden(el)) {
+            attachDragEvents(el, db.parseId(game.key));
 
             draw.surface(el.getContext('2d'));
-            draw.size(game.board.sze);
+            draw.size(game.board.size);
             draw.cities(game.board.points);
+            rendered = true;
         }
         
         draw.paths(game.board.connections);
     });
 
-    rendered = true;
+
+    localStorage.setItem('game-key', game.key);
 }
 
 dom.joinFind.addEventListener('click', function() {
@@ -271,9 +332,9 @@ dom.joinFind.addEventListener('click', function() {
         return alert('Enter a 4 character game key.');
     }
 
-    db.isGame(key).then(function(isGame) {
-        if (!isGame) {
-            return alert('Game not found.');
+    db.isGame(key).then(function(game) {
+        if (!game && !game.started) {
+            return alert('Game not found or has already started.');
         }
 
         db.watchGame(key, onUpdate);
@@ -297,3 +358,81 @@ dom.displayFind.addEventListener('click', function() {
         router.update('/display/game');
     });
 });
+
+dom.start.addEventListener('click', function() {
+    var key  = localStorage.getItem('game-key');
+
+    if (!key) {
+        return router.update('/landing');
+    }
+
+    api.startGame({ key: db.parseId(key) }).then(function() {
+        router.update('/game');
+    });
+});
+
+window.addEventListener('load', function() {
+    var key = localStorage.getItem('game-key');
+
+    if (key) {
+        db.watchGame(key, onUpdate);
+    }
+
+    document.body.removeAttribute('hide');
+});
+
+router.onEnter('/create/color', function() {
+    dom.tokens.forEach(function(el) {
+        el.innerHTML = '';
+
+        colors = ['red', 'yellow', 'green', 'blue', 'black'];
+    
+        for (var i = 0; i < colors.length; i++) {
+            var color = colors[i];
+            var colorToken = token(color);
+            el.appendChild(colorToken);
+            colorToken.addEventListener('click', function() {
+                api.createGame({ color: color }).then(function(res) {
+                    db.watchGame(res.key, onUpdate);
+                    router.update('/create/share');
+                })
+            });
+        }
+    });
+});
+
+router.onEnter('/landing', function() {
+    document.body.setAttribute('style', 'animation: scroll linear 120s infinite;');
+});
+
+router.onLeave('/landing', function() {
+    document.body.removeAttribute('style');
+});
+
+function back(color) {
+    var el = $$('[game] [nav] [' + color + ']')[0];
+    el.oldRoute = el.getAttribute('nav-to');
+    el.oldText = el.innerHTML;
+    return function() {
+        el.innerHTML = 'Back';
+        el.setAttribute('nav-to', '/game');
+    }
+}
+
+function reset(color) {
+    var el = $$('[game] [nav] [' + color + ']')[0];
+    return function() {
+        el.innerHTML = el.oldText;
+        el.setAttribute('nav-to', el.oldRoute);
+    }
+}
+
+router.onEnter('/game/scores', back('red'));
+router.onEnter('/game/hand', back('yellow'));
+router.onEnter('/game/deck', back('green'));
+router.onEnter('/game/routes', back('blue'));
+
+router.onLeave('/game/scores', reset('red'));
+router.onLeave('/game/hand', reset('yellow'));
+router.onLeave('/game/deck', reset('green'));
+router.onLeave('/game/routes', reset('blue'));

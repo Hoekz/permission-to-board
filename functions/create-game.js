@@ -306,7 +306,7 @@ function createGame(user) {
     var key = createGameKey();
     db.ref(`/${key}`).set(initGame(user, color));
 
-    this.response.end(JSON.stringify({ id: key }));
+    this.response.end(JSON.stringify({ key }));
 }
 
 module.exports = { createGame };

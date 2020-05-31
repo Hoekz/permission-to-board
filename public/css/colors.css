@@ -29,3 +29,11 @@
 [white] {
     background-color: #aaa;
 }
+
+[locomotive] {
+    background: linear-gradient(45deg, #a33, #aa3, #3a3, #33a, #a3a);
+}
+
+[back] {
+    background-color: #653;
+}
