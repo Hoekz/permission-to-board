@@ -8,6 +8,6 @@
   },
   "private": true,
   "engines" : {
-    "node" : "11"
+    "node" : "10"
   }
 }
