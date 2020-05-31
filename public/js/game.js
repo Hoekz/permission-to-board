@@ -15,6 +15,7 @@ var dom = {
     start: $$('[start]')[0],
     selected: $$('[selected]')[0],
     game: $$('[game]')[0],
+    onTurn: $$('[on-turn]')[0],
 };
 
 function text(str, attr) {
@@ -122,7 +123,13 @@ function select(route, key) {
     dom.selected.innerHTML = '';
 
     var play = button('green', 'Play', function() {
-        api.playPath({ key: key, start: route.start, end: route.end });
+        if (route.color !== 'any') {
+            return api.playPath({ key: key, start: route.start, end: route.end });
+        }
+
+        db.currentGame.routeToBePlayed = route;
+        onUpdate(db.currentGame);
+        router.update('/game/hand');
     });
 
     if (!db.currentGame.isMyTurn) {
@@ -155,6 +162,16 @@ function onUpdate(game) {
     db.currentGame = game;
 
     if (game.started) {
+        if (router.route() === '/join/share') {
+            router.update('/game');
+        }
+
+        if (game.routeToBePlayed) {
+            dom.onTurn.innerHTML = 'Choose a color to play. Locomotives will be used as necessary.';
+        } else {
+            dom.onTurn.innerHTML = 'Your Turn';
+        }
+
         dom.players.forEach(function(el) {
             el.innerHTML = '';
             
@@ -177,7 +194,18 @@ function onUpdate(game) {
             var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'locomotive', 'black', 'white'];
     
             for (var i = 0; i < colors.length; i++) {
-                el.appendChild(card(colors[i], game.me.hand[colors[i]] || 0));
+                var option = card(colors[i], game.me.hand[colors[i]] || 0);
+
+                if (game.routeToBePlayed) {
+                    option.addEventListener('click', api.playPath.bind(null, {
+                        key: db.parseId(game.key),
+                        start: game.routeToBePlayed.start,
+                        end: game.routeToBePlayed.end,
+                        color: colors[i]
+                    }))
+                }
+
+                el.appendChild(option);
             }
         });
 

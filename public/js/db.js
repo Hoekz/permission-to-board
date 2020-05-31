@@ -18,7 +18,19 @@ var db = (function() {
         return parts.join(' ') + ' ' + last[0];
     }
 
-    function mapPlayers(players) {
+    var points = { 1: 1, 2: 2, 3: 4, 4: 7, 5: 10, 6: 15 };
+
+    function scorePlayer(routes, color) {
+        return routes.reduce(function(score, route) {
+            if (route.occupant === color) {
+                return score + points[route.length];
+            }
+
+            return score;
+        }, 0);
+    }
+
+    function mapPlayers(players, routes) {
         var mapped = {};
 
         for (var color in players) {
@@ -26,7 +38,7 @@ var db = (function() {
                 uid: players[color].uid,
                 name: simpleName(players[color].name),
                 color: color,
-                score: 0,
+                score: scorePlayer(routes, color),
                 trains: players[color].trains,
                 hand: players[color].hand || {},
                 routes: players[color].routes
@@ -63,7 +75,7 @@ var db = (function() {
 
             console.log(game);
 
-            var mappedPlayers = mapPlayers(game.players);
+            var mappedPlayers = mapPlayers(game.players, game.board.connections);
             var me = Object.values(mappedPlayers).find(function(player) {
                 return user && player.uid === user.uid;
             });

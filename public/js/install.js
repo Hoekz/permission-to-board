@@ -1,4 +1,4 @@
-var CACHE_NAME = 'permission-to-board-v1';
+var CACHE_NAME = 'permission-to-board-v0.1';
 var urlsToCache = [
     '/',
     '/__/firebase/3.8.0/firebase-app.js',

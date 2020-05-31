@@ -22,6 +22,10 @@ var api = (function() {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
             loading.setAttribute('hide', '');
+            if (xhr.status === 400) {
+                return reject(JSON.parse(xhr.responseText));
+            }
+
             try {
                 resolve(JSON.parse(xhr.responseText));
             } catch(e) {
@@ -50,7 +54,8 @@ var api = (function() {
 .forEach(function(action) {
     api[action] = function(params) {
         return api(action, params).catch(function(e) {
-            showError('Error during ' + action + ':', e);
+            console.log(e);
+            alert(e.message);
         });
     };
 });

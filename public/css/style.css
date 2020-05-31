@@ -272,12 +272,29 @@ body {
     margin: -2rem;
 }
 
-[game]:not([my-turn]) [routes] .new.route {
+[game]:not([my-turn]) [routes] .new.route, [game]:not([my-turn]) [on-turn] {
     display: none;
 }
 
 [game]:not([my-turn]) [card] {
     pointer-events: none;
+}
+
+[game] [on-turn] {
+    position: absolute;
+    z-index: 1000;
+    top: 0.5rem;
+    padding: 0.5rem 2rem;
+    background: rgba(0,0,0,0.75);
+    border-radius: 5rem;
+    color: white;
+    font-size: 1.5rem;
+    animation: show-then-shrink 2s linear;
+}
+
+@keyframes show-then-shrink {
+    from, 75% { font-size: 8vw; top: 40vh; }
+    to { font-size: 1.5rem; top: 0.5rem; }
 }
 
 [players], [selected], [hand], [deck], [routes] {
@@ -339,10 +356,12 @@ body {
 }
 
 [game] [card], [display] [card] {
-    width: 12rem;
-    height: 16rem;
-    margin-right: 2vw;
-    font-size: 3vw;
+    max-width: 12rem;
+    width: 12vw;
+    max-height: 16rem;
+    height: 16vw;
+    margin-right: 2rem;
+    font-size: 3rem;
     box-shadow: -1rem 0 1rem 0 rgba(0,0,0,0.5);
     border-radius: 1rem;
     border: 0.5rem solid white;

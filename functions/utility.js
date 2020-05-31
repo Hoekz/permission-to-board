@@ -10,7 +10,7 @@ class Err {
     }
 
     toJSON() {
-        return `{"message": "${this.message}"}`;
+        return { message: this.message };
     }
 }
 
