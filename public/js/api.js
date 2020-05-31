@@ -44,7 +44,7 @@ var api = (function() {
 })();
 
 [
-    'createGame', 'joinGame', 'startGame',
+    'createGame', 'joinGame', 'startGame',  'log',
     'takeCard', 'drawCard', 'playPath', 'skipTurn', 'getRoutes', 'chooseRoutes'
 ]
 .forEach(function(action) {

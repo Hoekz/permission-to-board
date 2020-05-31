@@ -11,7 +11,7 @@ function $$(selector) {
 
 var router = (function() {
     var routes = {};
-    var lastRoute = '';
+    var lastRoute = localStorage.getItem('last-route') || '';
 
     function bindRoutes() {
         $$('[nav-to]').forEach(function(el) {
@@ -47,6 +47,7 @@ var router = (function() {
         }
 
         lastRoute = location.hash.slice(1);
+        localStorage.setItem('last-route', lastRoute);
 
         if (routes[lastRoute] && routes[lastRoute].enter) {
             routes[lastRoute].enter();
@@ -63,6 +64,10 @@ var router = (function() {
             updateRoute(location.hash.slice(1));
         }
     });
+
+    if (lastRoute) {
+        updateRoute(lastRoute);
+    }
 
     return {
         onEnter: function(url, fn) {

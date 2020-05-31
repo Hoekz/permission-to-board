@@ -302,6 +302,10 @@ function onUpdate(game) {
         if (Object.keys(game.players).length > 1) {
             dom.start.removeAttribute('disabled');
         }
+
+        if (game.me && router.route().indexOf('color') > -1) {
+            router.update(router.route().replace('/color', '/share'));
+        }
     }
 
     dom.key.forEach(function(el) {
@@ -381,6 +385,15 @@ window.addEventListener('load', function() {
     document.body.removeAttribute('hide');
 });
 
+function createGame(color) {
+    return function() {
+        api.createGame({ color: color }).then(function(res) {
+            db.watchGame(res.key, onUpdate);
+            router.update('/create/share');
+        });
+    }
+}
+
 router.onEnter('/create/color', function() {
     dom.tokens.forEach(function(el) {
         el.innerHTML = '';
@@ -391,12 +404,7 @@ router.onEnter('/create/color', function() {
             var color = colors[i];
             var colorToken = token(color);
             el.appendChild(colorToken);
-            colorToken.addEventListener('click', function() {
-                api.createGame({ color: color }).then(function(res) {
-                    db.watchGame(res.key, onUpdate);
-                    router.update('/create/share');
-                })
-            });
+            colorToken.addEventListener('click', createGame(color));
         }
     });
 });
@@ -436,3 +444,7 @@ router.onLeave('/game/scores', reset('red'));
 router.onLeave('/game/hand', reset('yellow'));
 router.onLeave('/game/deck', reset('green'));
 router.onLeave('/game/routes', reset('blue'));
+
+window.onerror = function(msg, src, line, col) {
+    api.log({ log: src + ' ' + line + ':' + col + ' -- ' + message });
+}

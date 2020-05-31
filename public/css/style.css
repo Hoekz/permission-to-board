@@ -331,6 +331,13 @@ body {
     padding-right: 2rem;
 }
 
+[create] [players], [join] [players] {
+    position: absolute;
+    top: calc(50vh + 3rem);
+    width: 50vw;
+    min-width: 30rem;
+}
+
 [game] [card], [display] [card] {
     width: 12rem;
     height: 16rem;

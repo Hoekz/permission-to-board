@@ -35,3 +35,7 @@ exports.takeCard = onMyTurn(actions.take);
 exports.drawCard = onMyTurn(actions.draw);
 exports.playPath = onMyTurn(actions.play);
 exports.skipTurn = onMyTurn(actions.skip);
+
+exports.log = requireAuth(function() {
+    console.log(this.request.query.log);
+});
