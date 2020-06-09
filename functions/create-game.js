@@ -1,12 +1,14 @@
-var db = require("firebase-admin").database();
+const db = require("firebase-admin").database();
 const { Err, rand } = require('./utility');
-var { createPlayer, colors } = require('./join-game');
+const { createPlayer, colors } = require('./join-game');
 
 function createGameKey() {
-    var charset = [
+    const charset = [
         'alpha', 'bravo', 'charlie', 'delta', 'echo',
         'foxtrot', 'golf', 'hotel', 'india', 'juliett',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+        'kilo', 'lima', 'mike', 'november', 'oscar', 'papa',
+        'quebec', 'romeo', 'sierra', 'tango', 'uniform',
+        'victor', 'whiskey', 'xray', 'yankee', 'zulu'
     ];
 
     return [0,0,0,0].map(() => charset[rand(charset.length)]).join('-');
@@ -88,8 +90,8 @@ function createMap(count) {
 */
 
 function originalMap() {
-    var size = { x: 950, y: 600 };
-    var cities = {
+    const size = { x: 950, y: 600 };
+    const cities = {
         'vancouver': {x: 72, y: 64},
         'calgary': {x: 204, y: 48},
         'winnipeg': {x: 428, y: 56},
@@ -127,7 +129,7 @@ function originalMap() {
         'new orleans': {x: 664, y: 520},
         'miami': {x: 886, y: 556}
     };
-    var connections = [
+    const connections = [
         {start: 'vancouver', end: 'seattle', color: 'any', length: 1},
         {start: 'seattle', end: 'vancouver', color: 'any', length: 1},
         {start: 'seattle', end: 'portland', color: 'any', length: 1},

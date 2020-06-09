@@ -41,10 +41,14 @@ body {
     [portrait] {
         display: block;
         color: white;
-        font-size: 3rem;
+        font-size: 1.5rem;
         text-align: center;
         margin: 4rem 2rem;
         text-shadow: 0 0 2rem rgba(0,0,0,1);
+    }
+
+    [portrait] [logo] {
+        width: calc(100vw - 4rem);
     }
 
     @media screen and (orientation: portrait) {

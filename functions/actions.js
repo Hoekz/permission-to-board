@@ -117,6 +117,10 @@ function play(action) {
         throw new Err('You do not have enough to play here.');
     }
 
+    if (player.trains < path.length) {
+        throw new Error('You do not have enough trains left.');
+    }
+
     if (choice.color === 'locomotive') {
         if (hand.locomotive < path.length) {
             throw new Err('You do not have enough to play here.');

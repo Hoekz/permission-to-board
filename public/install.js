@@ -10,7 +10,7 @@ var urlsToCache = [
     '/img/background.jpg',
     '/img/city.png',
     '/img/icon.png',
-    '/img/map.png',
+    '/img/map.jpg',
     '/img/title.png',
     '/img/train_overlay.png',
     '/img/train-count.png',

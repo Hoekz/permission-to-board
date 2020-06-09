@@ -411,6 +411,10 @@ window.addEventListener('load', function() {
     }
 
     document.body.removeAttribute('hide');
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/install.js');
+    }
 });
 
 function createGame(color) {

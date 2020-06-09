@@ -28,7 +28,7 @@ function subGraphs(connections) {
 }
 
 function playerGraphs(game) {
-    return game.connections.reduce((players, connection) => {
+    return game.board.connections.reduce((players, connection) => {
         if (!connection.occupant) {
             return players;
         }
@@ -133,6 +133,8 @@ function longestRoute(playerGraphs) {
 }
 
 function endGame(game) {
+    game.ref('started').set('finished');
+
     const allSubGraphs = playerSubGraphs(game);
 
     for (player in game.players) {
@@ -146,8 +148,6 @@ function endGame(game) {
     longestRoute(allSubGraphs).forEach(player => {
         game.ref.child('players').child(player).child('longestTrainBonus').set(10);
     });
-
-    game.ref('started').set('finished');
 }
 
 module.exports = { endGame };
