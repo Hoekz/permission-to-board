@@ -51,6 +51,14 @@ body {
         width: calc(100vw - 4rem);
     }
 
+    [portrait] [icon] {
+        width: 7rem;
+        height: 7rem;
+        margin: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0.5rem 0.5rem 0.5rem 0 rgba(0,0,0,0.75)
+    }
+
     @media screen and (orientation: portrait) {
         [landscape] {
             display: none !important;
@@ -109,6 +117,20 @@ body {
     0% { transform: translate(-200px, 0); opacity: 0; }
     10%, 60% { opacity: 1 }
     70%, 100% { transform: translate(200px, 0); opacity: 0; }
+}
+
+[help] {
+    background: rgba(0,0,0,0.75);
+    border-radius: 2rem;
+    padding: 0.5rem 2rem;
+    text-decoration: none;
+    cursor: pointer;
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    display: block;
+    color: white;
+    text-transform: uppercase;
 }
 
 [route] {
@@ -292,13 +314,13 @@ body {
     background: rgba(0,0,0,0.75);
     border-radius: 5rem;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     animation: show-then-shrink 2s linear;
 }
 
 @keyframes show-then-shrink {
     from, 75% { font-size: 8vw; top: 40vh; }
-    to { font-size: 1.5rem; top: 0.5rem; }
+    to { font-size: 1.25rem; top: 0.5rem; }
 }
 
 [players], [selected], [hand], [deck], [routes] {
@@ -329,11 +351,13 @@ body {
     box-shadow: none;
 }
 
-[players] [player] [score] {
+[players] [player] [info] {
     display: inline-block;
     width: 5rem;
+}
+
+[players] [player] span {
     text-align: right;
-    background-image: url('../img/score.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: right;
@@ -341,15 +365,23 @@ body {
     padding-right: 2rem;
 }
 
+[players] [player] [score], [players] [player] [crown] {
+    height: 1.8rem;
+    background-image: url('../img/score.png');
+}
+
 [players] [player] [train-count] {
-    display: inline-block;
-    width: 4rem;
-    text-align: right;
+    height: 1.8rem;
     background-image: url('../img/train-count.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: right;
-    padding-right: 2rem;
+}
+
+[players] [btn] {
+    position: absolute;
+    bottom: 0;
+}
+
+[display] [players] [btn] {
+    bottom: -4rem;
 }
 
 [create] [players], [join] [players] {
@@ -506,6 +538,7 @@ body {
     bottom: 4rem;
     width: 100%;
     z-index: 200;
+    padding-top: 3rem;
 }
 
 [game] [players] {

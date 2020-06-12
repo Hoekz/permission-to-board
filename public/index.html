@@ -32,7 +32,9 @@
 </head>
 <body hide>
     <div portrait>
-        <p id="download">Please download the game as a PWA through the browser menu.</p>
+        <img icon src="img/icon192.png" />
+        <img logo src="img/title.png"/>
+        <p id="download">For the best experience, please download the game.</p>
         <p id="rotate">Otherwise, you can rotate your device to play.</p>
     </div>
     <div landscape>
@@ -41,6 +43,7 @@
             <button nav-to="/create/color" btn blue>Create New Game</button>
             <button nav-to="/join/find" btn green>Join Existing Game</button>
             <button nav-to="/display/find" btn yellow desktop>Host Existing Game</button>
+            <a help href="/how-to" target="_blank">Help</a>
         </div>
         <div route="/create" create>
             <div route="/create/color">
@@ -74,7 +77,7 @@
         <div route="/game" game>
             <div on-turn>Your Turn</div>
             <canvas board></canvas>
-            <div routes choose></div>
+            <div routes choose hide></div>
             <div selected hide></div>
             <div nav>
                 <button nav-to="/game/scores" btn red>Scores</button>

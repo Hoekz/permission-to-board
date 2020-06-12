@@ -62,11 +62,21 @@ function player(color, name, score, trains, isCurrent) {
     el.setAttribute('player', '');
 
     el.appendChild(group([token(color), text(name)]));
-    el.appendChild(group([text(score, 'score'), text(trains, 'train-count')]));
+    el.appendChild(group([text(score, 'score info'), text(trains, 'train-count info')]));
 
     if (isCurrent) {
         el.setAttribute('active', '');
     }
+
+    return el;
+}
+
+function endPlayer(color, name, score, longest, winner) {
+    var el = document.createElement('div');
+    el.setAttribute('player', '');
+
+    el.appendChild(group([token(color), text(name)]));
+    el.appendChild(group([text('', winner ? 'crown' : ''), text('', longest ? 'train-count' : ''), text(score, 'info')]));
 
     return el;
 }
@@ -103,7 +113,7 @@ function routeCard(start, end, worth, completed) {
     return el;
 }
 
-function newRouteCard() {
+function newRouteCard(key) {
     var el = document.createElement('div');
     el.className = 'new route';
 
@@ -111,6 +121,8 @@ function newRouteCard() {
     worthEl.className = 'worth';
 
     el.appendChild(worthEl);
+
+    el.addEventListener('click', api.getRoutes.bind(null, { key: db.parseId(key) }));
 
     return el;
 }
@@ -157,6 +169,14 @@ function notHidden(el) {
     return el === document.body || (!el.hasAttribute('hide') && notHidden(el.parentElement));
 }
 
+function leaveGame() {
+    if (confirm('Are you sure you want to leave the game?')) {
+        localStorage.removeItem('game-key');
+        db.stopWatching();
+        router.update('/landing');
+    }
+}
+
 var rendered = false;
 function onUpdate(game) {
     db.currentGame = game;
@@ -166,23 +186,52 @@ function onUpdate(game) {
             router.update('/game');
         }
 
+        if (router.route() === '/display') {
+
+        }
+
         if (game.routeToBePlayed) {
             dom.onTurn.innerHTML = 'Choose a color to play. Locomotives will be used as necessary.';
         } else {
             dom.onTurn.innerHTML = 'Your Turn';
         }
 
-        dom.players.forEach(function(el) {
-            el.innerHTML = '';
-            
-            for(let i = 0; i < game.order.length; i++) {
-                var color = game.order[i];
-                var isCurrent = color === game.current.player;
-                var details = game.players[color];
-    
-                el.appendChild(player(color, details.name, details.score, details.trains, isCurrent))
+        if (game.started === 'finished') {
+            if (router.route().indexOf('/game') === 0) {
+                router.update('/game/scores');
             }
-        });
+    
+            dom.onTurn.innerHTML = 'Game Over!';
+            dom.players.forEach(function(el) {
+                el.innerHTML = '';
+                
+                for(let i = 0; i < game.order.length; i++) {
+                    var color = game.order[i];
+                    var details = game.players[color];
+        
+                    el.appendChild(endPlayer(color, details.name, details.score, details.hasLongestTrain, details.winner))
+                }
+
+                el.appendChild(button('red', 'Leave Game', leaveGame));
+            });
+
+            $$('[nav] [btn]:last-child')[0].removeAttribute('hide');
+        } else {
+            dom.players.forEach(function(el) {
+                el.innerHTML = '';
+                
+                for(let i = 0; i < game.order.length; i++) {
+                    var color = game.order[i];
+                    var isCurrent = color === game.current.player;
+                    var details = game.players[color];
+        
+                    el.appendChild(player(color, details.name, details.score, details.trains, isCurrent))
+                }
+
+                el.appendChild(button('red', 'Leave Game', leaveGame));
+            });
+        }
+
     
         dom.hand.forEach(function(el) {
             el.innerHTML = '';
@@ -224,7 +273,7 @@ function onUpdate(game) {
                 }
             }
 
-            el.appendChild(newRouteCard());
+            el.appendChild(newRouteCard(game.key));
         });
 
         dom.routeOpts.forEach(function(el) {
@@ -295,7 +344,7 @@ function onUpdate(game) {
             el.appendChild(back);
         });
 
-        if (game.isMyTurn) {
+        if (game.isMyTurn || game.started === 'finished') {
             dom.game.setAttribute('my-turn', '');
         } else {
             dom.game.removeAttribute('my-turn');
@@ -449,11 +498,19 @@ router.onLeave('/landing', function() {
     document.body.removeAttribute('style');
 });
 
+function resetRoute() {
+    if (db.currentGame) {
+        delete db.currentGame.routeToBePlayed;
+        dom.onTurn.innerHTML = db.currentGame.started === 'finished' ? 'Game Over' : 'Your Turn';
+    }
+}
+
 function back(color) {
     var el = $$('[game] [nav] [' + color + ']')[0];
     el.oldRoute = el.getAttribute('nav-to');
     el.oldText = el.innerHTML;
     return function() {
+        resetRoute();
         el.innerHTML = 'Back';
         el.setAttribute('nav-to', '/game');
     }
@@ -462,6 +519,7 @@ function back(color) {
 function reset(color) {
     var el = $$('[game] [nav] [' + color + ']')[0];
     return function() {
+        resetRoute();
         el.innerHTML = el.oldText;
         el.setAttribute('nav-to', el.oldRoute);
     }

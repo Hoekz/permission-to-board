@@ -33,16 +33,36 @@ var db = (function() {
     function mapPlayers(players, routes) {
         var mapped = {};
 
+        var max = { color: [], score: -1 };
+
         for (var color in players) {
+            var score = scorePlayer(routes, color) + (players[color].routeBonus || 0) + (players[color].longestTrainBonus || 0);
+
             mapped[color] = {
                 uid: players[color].uid,
                 name: simpleName(players[color].name),
                 color: color,
-                score: scorePlayer(routes, color),
+                score: score,
                 trains: players[color].trains,
                 hand: players[color].hand || {},
-                routes: players[color].routes
+                routes: players[color].routes,
+                hasLongestTrain: 'longestTrainBonus' in players[color]
             };
+
+            if (score === max.score) {
+                max.color.push(color);
+            }
+
+            if (score > max.score) {
+                max.color = [color];
+                max.score = score;
+            }
+        }
+
+        console.log(max);
+
+        for (var i = 0; i < max.color.length; i++) {
+            mapped[max.color[i]].winner = true;
         }
 
         return mapped;
@@ -58,10 +78,7 @@ var db = (function() {
     }
 
     function watchGame(id, onUpdate) {
-        if (watching) {
-            baseRef.child(watching).off();
-        }
-
+        stopWatching();
         watching = parseId(id);
 
         baseRef.child(watching).on('value', function(snapshot) {
@@ -92,6 +109,14 @@ var db = (function() {
                 isMyTurn: me && game.current && me.color === game.current.player
             });
         });
+    }
+
+    function stopWatching() {
+        if (watching) {
+            baseRef.child(watching).off();
+        }
+
+        watching = null;
     }
 
     function parseId(id) {
@@ -127,6 +152,7 @@ var db = (function() {
     return {
         isGame: isGame,
         watchGame: watchGame,
+        stopWatching: stopWatching,
         parseId: parseId,
         simplifyId: simplifyId
     }

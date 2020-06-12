@@ -9,9 +9,11 @@
       ".read": "true",
       ".validate": "(!data.exists() && newData.hasChildren(['players', 'board', 'deck'])) || !newData.exists()",
       "started": {
+        ".read": "true",
         ".validate": "!data.exists() && newData.val() == 'fight!'"
       },
       "board": {
+        ".read": "true",
         ".validate": "(!data.exists() && newData.hasChildren(['points', 'connections'])) || !newData.exists()",
         "points": {
           "$point": {
@@ -48,7 +50,7 @@
       "players": {
         "$player": {
           "hand": {
-            ".read": "auth.uid == data.child('uid')",
+            ".read": "auth.uid == data.child('uid').val()",
             "red": {
               ".validate": "newData.isNumber()"
             },
@@ -78,18 +80,20 @@
             }
           },
           "trains": {
+            ".read": "true",
             ".validate": "newData.isNumber()"
           },
           "name": {
+            ".read": "true",
             ".validate": "newData.isString()"
           },
           "uid": {
+            ".read": "true",
             ".validate": "newData.isString()"
           }
         }
       },
       "deck": {
-        ".read": "false",
         "red": {
           ".validate": "newData.isNumber()"
         },
@@ -119,7 +123,6 @@
         }
       },
       "routes": {
-        ".read": "false",
         "$route": {
           "start": {
             ".validate": "newData.isString()"
@@ -133,6 +136,7 @@
         }
       },
       "display": {
+        ".read": "true",
         "slot-1": {
           ".validate": "root.child('colors').hasChild(newData.val())"
         },
@@ -150,6 +154,7 @@
         }
       },
       "current": {
+        ".read": "true",
         ".validate": "newData.hasChildren(['player', 'action']) && data.child('player').val() != newData.child('player').val() && newData.child('action').val() == 0",
         "player": {
           ".validate": "root.child($game).child('players').hasChild(newData.val())"
@@ -159,6 +164,7 @@
         }
       },
       "order": {
+        ".read": "true",
         "$player": {
           ".validate": "root.child($game).child('players').hasChild(newData.val())"
         }

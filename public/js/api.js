@@ -33,14 +33,16 @@ var api = (function() {
             }
         };
 
-        loading.removeAttribute('hide');
-
         authorize().then(function(user) {
             return user.getToken();
         }).then(function(token) {
             xhr.open('GET', baseUrl + func + parameterize(params));
             xhr.setRequestHeader('Authorization', 'Bearer ' + token);
             xhr.send();
+            loading.removeAttribute('hide');
+        }).catch(function(e) {
+            loading.setAttribute('hide', '');
+            throw e;
         });
 
         return promise;
