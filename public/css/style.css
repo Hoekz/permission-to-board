@@ -196,6 +196,7 @@ body {
     height: 3rem;
     width: 3rem;
     border-radius: 2rem;
+    border-color: white;
     margin: 1.5rem;
     display: inline-block;
     cursor: pointer;
@@ -384,11 +385,32 @@ body {
     bottom: -4rem;
 }
 
+[display] [key] {
+    position: absolute;
+    top: 1rem;
+    right: 2rem;
+    font-size: 3rem;
+}
+
 [create] [players], [join] [players] {
     position: absolute;
     top: calc(50vh + 3rem);
     width: 50vw;
     min-width: 30rem;
+}
+
+[create] [players] [score], [join] [players] [score] {
+    display: none;
+}
+
+[join] [wait] {
+    background: rgba(0,0,0,0.5);
+    padding: 1rem;
+    color: white;
+    border-radius: 1rem;
+    font-size: 1.5rem;
+    position: absolute;
+    top: calc(50vh - 7rem);
 }
 
 [game] [card], [display] [card] {

@@ -21,7 +21,7 @@ var dom = {
 function text(str, attr) {
     var el = document.createElement('span');
     if (attr) {
-        el.setAttribute(attr, '');
+        attr.split(' ').forEach(function(a) { el.setAttribute(a, '') });
     }
     el.innerHTML = str;
     return el;
@@ -62,7 +62,7 @@ function player(color, name, score, trains, isCurrent) {
     el.setAttribute('player', '');
 
     el.appendChild(group([token(color), text(name)]));
-    el.appendChild(group([text(score, 'score info'), text(trains, 'train-count info')]));
+    el.appendChild(group([text(score || 0, 'score info'), text(trains, 'train-count info')]));
 
     if (isCurrent) {
         el.setAttribute('active', '');
@@ -372,8 +372,10 @@ function onUpdate(game) {
             for(var color in game.players) {
                 var details = game.players[color];
     
-                el.appendChild(player(color, details.name, '', details.trains, false))
+                el.appendChild(player(color, details.name, 0, details.trains, false));
             }
+
+            el.appendChild(button('red', 'Leave Game', leaveGame));
         });
 
         if (Object.keys(game.players).length > 1) {
@@ -414,7 +416,7 @@ dom.joinFind.addEventListener('click', function() {
     }
 
     db.isGame(key).then(function(game) {
-        if (!game && !game.started) {
+        if (!game || game.started) {
             return alert('Game not found or has already started.');
         }
 
@@ -497,6 +499,10 @@ router.onEnter('/landing', function() {
 router.onLeave('/landing', function() {
     document.body.removeAttribute('style');
 });
+
+router.onEnter('/join/find', authorize);
+router.onEnter('/create/color', authorize);
+router.onEnter('/display/find', authorize);
 
 function resetRoute() {
     if (db.currentGame) {

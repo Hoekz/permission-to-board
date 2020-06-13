@@ -69,6 +69,7 @@ var db = (function() {
     }
 
     function isGame(id) {
+        stopWatching();
         return new Promise(function(resolve) {
             baseRef.child(parseId(id)).once('value', function(snapshot) {
                 var game = snapshot.val();
@@ -114,6 +115,7 @@ var db = (function() {
     function stopWatching() {
         if (watching) {
             baseRef.child(watching).off();
+            localStorage.removeItem('game-key');
         }
 
         watching = null;
