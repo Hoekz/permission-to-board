@@ -64,7 +64,7 @@ var api = (function() {
     api[action] = function(params) {
         return api(action, params).catch(function(e) {
             console.log(e);
-            alert(e.message);
+            alert(e);
         });
     };
 });

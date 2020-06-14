@@ -21,10 +21,12 @@ function subGraphs(connections) {
             inGraphs[0].connections.push(connection);
         }
 
-        graphs.push({ nodes: [connection.start, connection.end], connections: [connection] });
+        if (inGraphs.length === 0) {
+            graphs.push({ nodes: [connection.start, connection.end], connections: [connection] });
+        }
     });
 
-    return graphs.map(graph => graph.connections);
+    return graphs;
 }
 
 function playerGraphs(game) {
@@ -104,7 +106,7 @@ function maximize(nodeMap, connections) {
     return Math.max(...Object.keys(simple.nodeMap).map(node => furthest(node, simple.connections)));
 }
 
-function maxRouteLength(connections) {
+function maxRouteLength({ connections }) {
     const nodeList = [...new Set([
         ...connections.map(conn => conn.start),
         ...connections.map(conn => conn.end),
@@ -133,11 +135,11 @@ function longestRoute(playerGraphs) {
 }
 
 function endGame(game) {
-    game.ref('started').set('finished');
+    game.ref.child('started').set('finished');
 
     const allSubGraphs = playerSubGraphs(game);
 
-    for (player in game.players) {
+    for (let player in game.players) {
         const diff = game.players[player].routes.reduce((diff, route) =>
             diff + (routeMet(allSubGraphs[player], route) ? route.worth : -route.worth)
         , 0);

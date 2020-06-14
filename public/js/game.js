@@ -195,7 +195,7 @@ function onUpdate(game) {
         if (game.routeToBePlayed) {
             dom.onTurn.innerHTML = 'Choose a color to play. Locomotives will be used as necessary.';
         } else {
-            dom.onTurn.innerHTML = 'Your Turn';
+            dom.onTurn.innerHTML = game.lastTurn ? 'Last Turn!' : 'Your Turn';
         }
 
         if (game.started === 'finished') {
@@ -245,10 +245,10 @@ function onUpdate(game) {
             var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'locomotive', 'black', 'white'];
     
             for (var i = 0; i < colors.length; i++) {
-                var option = card(colors[i], game.me.hand[colors[i]] || 0);
+                const option = card(colors[i], game.me.hand[colors[i]] || 0);
 
                 if (game.routeToBePlayed) {
-                    var action = api.playPath.bind(null, {
+                    const action = api.playPath.bind(null, {
                         key: db.parseId(game.key),
                         start: game.routeToBePlayed.start,
                         end: game.routeToBePlayed.end,
@@ -256,9 +256,12 @@ function onUpdate(game) {
                     });
 
                     option.addEventListener('click', function() {
-                        action().then(function() {
+                        this.setAttribute('active', '');
+
+                        action().then((function() {
+                            this.removeAttribute('active');
                             select(null);
-                        });
+                        }).bind(this));
                     });
                 }
 
@@ -269,7 +272,7 @@ function onUpdate(game) {
         dom.routes.forEach(function(el) {
             el.innerHTML = '';
 
-            if (!game.me) {
+            if (!game.me || !game.me.routes) {
                 return;
             }
 
@@ -285,7 +288,7 @@ function onUpdate(game) {
         });
 
         dom.routeOpts.forEach(function(el) {
-            if (!game.me) {
+            if (!game.me || !game.me.routes) {
                 return;
             }
 
@@ -344,8 +347,19 @@ function onUpdate(game) {
             el.innerHTML = '';
     
             for (var slot in game.slots) {
-                var option = card(game.slots[slot]);
-                option.addEventListener('click', api.takeCard.bind(null, { key: db.parseId(game.key), slot: slot }));
+                const option = card(game.slots[slot]);
+                const action = api.takeCard.bind(null, {
+                    key: db.parseId(game.key),
+                    slot: slot
+                });
+
+                option.addEventListener('click', function() {
+                    this.setAttribute('active', '');
+                    action().then((function() {
+                        this.removeAttribute('active');
+                    }).bind(this))
+                });
+
                 el.appendChild(option);
             }
 
@@ -534,7 +548,6 @@ function back(color) {
     el.oldRoute = el.getAttribute('nav-to');
     el.oldText = el.innerHTML;
     return function() {
-        resetRoute();
         el.innerHTML = 'Back';
         el.setAttribute('nav-to', '/game');
     }

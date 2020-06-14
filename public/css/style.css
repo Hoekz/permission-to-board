@@ -113,6 +113,11 @@ body {
     100% { transform: translate(0, 0); }
 }
 
+@keyframes take {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(0, 100vh); }
+}
+
 @keyframes loading {
     0% { transform: translate(-200px, 0); opacity: 0; }
     10%, 60% { opacity: 1 }
@@ -438,6 +443,10 @@ body {
     border: 0.5rem solid white;
     padding: 1rem;
     position: relative;
+}
+
+[game] [card][active] {
+    animation: take 0.25s linear forwards;
 }
 
 [game] [card]::before, [display] [card]::before {

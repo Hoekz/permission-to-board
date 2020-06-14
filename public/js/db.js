@@ -89,7 +89,10 @@ var db = (function() {
             players: mappedPlayers,
             slots: game.display,
             me: me,
-            isMyTurn: me && game.current && me.color === game.current.player
+            isMyTurn: me && game.current && me.color === game.current.player,
+            lastTurn: Object.values(game.players).some(function(player) {
+                return player.lastTurn;
+            })
         };
     }
 
