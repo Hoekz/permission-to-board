@@ -26,9 +26,21 @@ function cardFromDeck(game) {
 
     let card = cards[rand(cards.length)];
 
-    game.ref.child(`deck/${card}`).set(game.deck[card] - 1);
+    game.deck[card]--;
+    game.ref.child(`deck/${card}`).set(game.deck[card]);
 
     return card;
+}
+
+function resetDisplay(game) {
+    Object.values(game.display).forEach((card) => {
+        game.deck[card]++;
+        game.ref.child(`deck/${card}`).set(game.deck[card]);
+    });
+
+    Object.keys(game.display).forEach((slot) => {
+        game.ref.child(`display/${slot}`).set(cardFromDeck(game));
+    });
 }
 
 function take(action) {
@@ -51,7 +63,16 @@ function take(action) {
 
     game.ref.child(`players/${game.current.player}/hand/${card}`).set(game.players[game.current.player].hand[card] + 1);
 
-    game.ref.child(`display/slot-${slot}`).set(cardFromDeck(game));
+    const newCard = cardFromDeck(game);
+
+    if (newCard !== 'locomotive') {
+        game.ref.child(`display/slot-${slot}`).set(newCard);
+    } else if (Object.values(game.display).reduce((locs, card) => locs + (card === 'locomotive'), 0) === 2) {
+        game.display[`slot-${slot}`] = 'locomotive';
+        resetDisplay(game);
+    } else {
+        game.ref.child(`display/slot-${slot}`).set(newCard);
+    }
 
     if (card === 'locomotive' || action) {
         skip.call(this);

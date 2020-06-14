@@ -68,12 +68,38 @@ var db = (function() {
         return mapped;
     }
 
+    function mapGame(snapshot, key) {
+        var game = snapshot.val();
+
+        if (!game) {
+            return console.warn('Game ' + key + ' not currently available');
+        }
+
+        user = user || loggedInAs();
+
+        var mappedPlayers = mapPlayers(game.players, game.board.connections);
+        var me = Object.values(mappedPlayers).find(function(player) {
+            return user && player.uid === user.uid;
+        });
+
+        return {
+            started: game.started,
+            key: simplifyId(key),
+            current: game.current,
+            board: game.board,
+            order: game.order,
+            players: mappedPlayers,
+            slots: game.display,
+            me: me,
+            isMyTurn: me && game.current && me.color === game.current.player
+        };
+    }
+
     function isGame(id) {
         stopWatching();
         return new Promise(function(resolve) {
             baseRef.child(parseId(id)).once('value', function(snapshot) {
-                var game = snapshot.val();
-                resolve(game);
+                resolve(mapGame(snapshot, id));
             });
         });
     }
@@ -83,32 +109,7 @@ var db = (function() {
         watching = parseId(id);
 
         baseRef.child(watching).on('value', function(snapshot) {
-            var game = snapshot.val();
-
-            if (!game) {
-                return console.warn('Game not currently available');
-            }
-
-            user = user || loggedInAs();
-
-            console.log(game);
-
-            var mappedPlayers = mapPlayers(game.players, game.board.connections);
-            var me = Object.values(mappedPlayers).find(function(player) {
-                return user && player.uid === user.uid;
-            });
-
-            onUpdate({
-                started: game.started,
-                key: simplifyId(watching),
-                current: game.current,
-                board: game.board,
-                order: game.order,
-                players: mappedPlayers,
-                slots: game.display,
-                me: me,
-                isMyTurn: me && game.current && me.color === game.current.player
-            });
+            onUpdate(mapGame(snapshot, id));
         });
     }
 
@@ -145,6 +146,9 @@ var db = (function() {
             simple += {
                 alpha: 'A', bravo: 'B', charlie: 'C', delta: 'D', echo: 'E',
                 foxtrot: 'F', golf: 'G', hotel: 'H', india: 'I', juliett: 'J',
+                kilo: 'K', lima: 'L', mike: 'M', november: 'N', oscar: 'O', papa: 'P',
+                quebec: 'Q', romeo: 'R', sierra: 'S', tango: 'T', uniform: 'U',
+                victor: 'V', whiskey: 'W', xray: 'X', yankee: 'Y', zulu: 'Z'
             }[code] || code;
         });
 

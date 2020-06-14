@@ -136,7 +136,9 @@ function select(route, key) {
 
     var play = button('green', 'Play', function() {
         if (route.color !== 'any') {
-            return api.playPath({ key: key, start: route.start, end: route.end });
+            return api.playPath({ key: key, start: route.start, end: route.end }).then(function() {
+                select(null);
+            });
         }
 
         db.currentGame.routeToBePlayed = route;
@@ -246,12 +248,18 @@ function onUpdate(game) {
                 var option = card(colors[i], game.me.hand[colors[i]] || 0);
 
                 if (game.routeToBePlayed) {
-                    option.addEventListener('click', api.playPath.bind(null, {
+                    var action = api.playPath.bind(null, {
                         key: db.parseId(game.key),
                         start: game.routeToBePlayed.start,
                         end: game.routeToBePlayed.end,
                         color: colors[i]
-                    }))
+                    });
+
+                    option.addEventListener('click', function() {
+                        action().then(function() {
+                            select(null);
+                        });
+                    });
                 }
 
                 el.appendChild(option);
@@ -324,7 +332,9 @@ function onUpdate(game) {
                     }
 
                     api.chooseRoutes({ key: db.parseId(game.key), routes: JSON.stringify(chosen) });
-                }))
+                }));
+
+                el.removeAttribute('hide');
             } else {
                 el.setAttribute('hide', '');
             }
@@ -416,12 +426,12 @@ dom.joinFind.addEventListener('click', function() {
     }
 
     db.isGame(key).then(function(game) {
-        if (!game || game.started) {
+        if (!game || (game.started && !game.me)) {
             return alert('Game not found or has already started.');
         }
 
         db.watchGame(key, onUpdate);
-        router.update('/join/color');
+        router.update(game.started ? '/game' : '/join/color');
     });
 });
 
@@ -458,7 +468,12 @@ window.addEventListener('load', function() {
     var key = localStorage.getItem('game-key');
 
     if (key) {
-        db.watchGame(key, onUpdate);
+        db.isGame(key).then(function(game) {
+            if (!game || game.started === 'finished') {
+                db.stopWatching();
+                router.update('/landing');
+            }
+        });
     }
 
     document.body.removeAttribute('hide');
@@ -478,6 +493,7 @@ function createGame(color) {
 }
 
 router.onEnter('/create/color', function() {
+    authorize();
     dom.tokens.forEach(function(el) {
         el.innerHTML = '';
 
@@ -494,6 +510,7 @@ router.onEnter('/create/color', function() {
 
 router.onEnter('/landing', function() {
     document.body.setAttribute('style', 'animation: scroll linear 120s infinite;');
+    localStorage.removeItem('game-key');
 });
 
 router.onLeave('/landing', function() {
@@ -501,7 +518,6 @@ router.onLeave('/landing', function() {
 });
 
 router.onEnter('/join/find', authorize);
-router.onEnter('/create/color', authorize);
 router.onEnter('/display/find', authorize);
 
 function resetRoute() {
@@ -542,5 +558,5 @@ router.onLeave('/game/deck', reset('green'));
 router.onLeave('/game/routes', reset('blue'));
 
 window.onerror = function(msg, src, line, col) {
-    api.log({ log: src + ' ' + line + ':' + col + ' -- ' + message });
+    api.log({ log: src + ' ' + line + ':' + col + ' -- ' + msg });
 }

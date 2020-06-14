@@ -2,7 +2,7 @@ const functions = require('firebase-functions');
 const admin = require("firebase-admin");
 const serviceAccount = require("./secure/credentials.json");
 // Initialize the app with a custom auth variable, limiting the server's access
-admin.initializeApp({
+const db = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://permission-to-board.firebaseio.com"
 });
@@ -38,4 +38,14 @@ exports.skipTurn = onMyTurn(actions.skip);
 
 exports.log = requireAuth(function() {
     console.log(this.request.query.log);
+});
+
+exports.cleanup = requireAuth(() => {
+    db.database().ref().orderByChild('started').equalTo('finished').once('value', game => {
+        const gameData = game.val();
+
+        if (gameData.started === 'finished') {
+            game.ref.remove();
+        }
+    });
 });
