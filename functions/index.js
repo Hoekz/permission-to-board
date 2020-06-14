@@ -47,7 +47,7 @@ exports.cleanup = requireAuth(function() {
     root.once('value', data => {
         data.forEach(game => {
             console.log('checking', game.key);
-            if (game.val().started === 'finished') {
+            if (game.val() && game.val().started === 'finished') {
                 game.ref.remove();
             }
         });

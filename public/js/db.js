@@ -157,11 +157,20 @@ var db = (function() {
         return simple;
     }
 
+    function version() {
+        return new Promise(function(resolve) {
+            baseRef.child('version').once('value', function(snapshot) {
+                resolve(snapshot.val());
+            });
+        });
+    }
+
     return {
         isGame: isGame,
         watchGame: watchGame,
         stopWatching: stopWatching,
         parseId: parseId,
-        simplifyId: simplifyId
+        simplifyId: simplifyId,
+        version: version
     }
 })();

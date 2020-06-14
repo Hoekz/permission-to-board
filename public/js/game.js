@@ -480,6 +480,7 @@ dom.start.addEventListener('click', function() {
 
 window.addEventListener('load', function() {
     var key = localStorage.getItem('game-key');
+    var version = localStorage.getItem('app-version');
 
     if (key) {
         db.isGame(key).then(function(game) {
@@ -491,6 +492,15 @@ window.addEventListener('load', function() {
             db.watchGame(key, onUpdate);
         });
     }
+
+    db.version().then(function(dbVersion) {
+        if (version && version !== dbVersion) {
+            localStorage.removeItem('app-version');
+            window.location.reload(true);
+        } else {
+            localStorage.setItem('app-version', dbVersion);
+        }
+    });
 
     document.body.removeAttribute('hide');
 
