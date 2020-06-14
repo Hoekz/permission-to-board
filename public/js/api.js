@@ -3,6 +3,7 @@ var api = (function() {
         ? 'http://localhost:1234/permission-to-board/us-central1/'
         : 'https://us-central1-permission-to-board.cloudfunctions.net/';
     var loading = $$('[loading]')[0];
+    var alwaysHide;
 
     function parameterize(params) {
         var urlParams = [];
@@ -19,6 +20,8 @@ var api = (function() {
         var resolve, reject;
         var promise = new Promise(function(res, rej) {resolve = res; reject = rej;});
 
+        clearTimeout(alwaysHide);
+
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
             loading.setAttribute('hide', '');
@@ -32,6 +35,10 @@ var api = (function() {
                 resolve(xhr.responseText);
             }
         };
+
+        alwaysHide = setTimeout(function() {
+            loading.setAttribute('hide', '');
+        }, 15000);
 
         authorize().then(function(user) {
             return user.getToken();

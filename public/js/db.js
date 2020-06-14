@@ -59,8 +59,6 @@ var db = (function() {
             }
         }
 
-        console.log(max);
-
         for (var i = 0; i < max.color.length; i++) {
             mapped[max.color[i]].winner = true;
         }
@@ -109,7 +107,8 @@ var db = (function() {
         watching = parseId(id);
 
         baseRef.child(watching).on('value', function(snapshot) {
-            onUpdate(mapGame(snapshot, id));
+            const data = mapGame(snapshot, id);
+            if (data) onUpdate(data);
         });
     }
 

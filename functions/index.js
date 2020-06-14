@@ -38,14 +38,20 @@ exports.skipTurn = onMyTurn(actions.skip);
 
 exports.log = requireAuth(function() {
     console.log(this.request.query.log);
+    this.response.end('logged');
 });
 
-exports.cleanup = requireAuth(() => {
-    db.database().ref().orderByChild('started').equalTo('finished').once('value', game => {
-        const gameData = game.val();
+exports.cleanup = requireAuth(function() {
+    const root = db.database().ref();
 
-        if (gameData.started === 'finished') {
-            game.ref.remove();
-        }
+    root.once('value', data => {
+        data.forEach(game => {
+            console.log('checking', game.key);
+            if (game.val().started === 'finished') {
+                game.ref.remove();
+            }
+        });
+
+        this.response.end('cleaned up finished games');
     });
 });

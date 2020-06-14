@@ -471,8 +471,10 @@ window.addEventListener('load', function() {
         db.isGame(key).then(function(game) {
             if (!game || game.started === 'finished') {
                 db.stopWatching();
-                router.update('/landing');
+                return router.update('/landing');
             }
+
+            db.watchGame(key, onUpdate);
         });
     }
 
