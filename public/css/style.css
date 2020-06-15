@@ -63,6 +63,10 @@ body {
         [landscape] {
             display: none !important;
         }
+
+        body {
+            animation: none !important;
+        }
     }
 
     @media screen and (orientation: landscape) {
