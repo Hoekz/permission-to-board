@@ -38,43 +38,43 @@
         <p id="rotate">Otherwise, you can rotate your device to play.</p>
     </div>
     <div landscape>
-        <div route="/landing" landing>
+        <div page="/landing" landing>
             <img logo src="img/title.png"/>
             <button nav-to="/create/color" btn blue>Create New Game</button>
             <button nav-to="/join/find" btn green>Join Existing Game</button>
             <button nav-to="/display/find" btn yellow desktop>Host Existing Game</button>
             <a help href="/how-to">Help</a>
         </div>
-        <div route="/create" create>
-            <div route="/create/color">
+        <div page="/create" create>
+            <div page="/create/color">
                 <div header>Choose Token Color</div>
                 <div tokens></div>
             </div>
-            <div route="/create/share">
+            <div page="/create/share">
                 <div header>Share Your Game Key</div>
                 <div key></div>
                 <button btn blue disabled start>Start Game</button>
                 <div players></div>
             </div>
         </div>
-        <div route="/join" join>
-            <div route="/join/find">
+        <div page="/join" join>
+            <div page="/join/find">
                 <div header>Enter Your Game Key</div>
                 <input search type="text" placeholder="Game Key" maxlength="4"/>
                 <button btn blue find>Find</button>
             </div>
-            <div route="/join/color">
+            <div page="/join/color">
                 <div header>Choose Token Color</div>
                 <div tokens></div>
             </div>
-            <div route="/join/share">
+            <div page="/join/share">
                 <div header>Share Your Game Key</div>
                 <div key></div>
                 <div wait>The creator of the game will start it shortly.</div>
                 <div players></div>
             </div>
         </div>
-        <div route="/game" game>
+        <div page="/game" game>
             <div on-turn>Your Turn</div>
             <canvas board></canvas>
             <div routes choose hide></div>
@@ -85,18 +85,18 @@
                 <button nav-to="/game/deck" btn green>Deck</button>
                 <button nav-to="/game/routes" btn blue>Routes</button>
             </div>
-            <div route="/game/scores" players></div>
-            <div route="/game/hand" hand></div>
-            <div route="/game/deck" deck></div>
-            <div route="/game/routes" routes view></div>
+            <div page="/game/scores" players></div>
+            <div page="/game/hand" hand></div>
+            <div page="/game/deck" deck></div>
+            <div page="/game/routes" routes view></div>
         </div>
-        <div route="/display" display>
-            <div route="/display/find">
+        <div page="/display" display>
+            <div page="/display/find">
                 <div header>Enter Your Game Key</div>
                 <input search type="text" placeholder="Game Key" maxlength="4"/>
                 <button btn blue find>Find</button>
             </div>
-            <div route="/display/game">
+            <div page="/display/game">
                 <canvas board></canvas>
                 <div key></div>
                 <div players></div>
@@ -109,6 +109,5 @@
         <div></div>
         <div></div>
     </div>
-    <div route="/errors" errors></div>
 </body>
 </html>

@@ -3,8 +3,9 @@ function hasTouch() {
 }
 
 function attachDragEvents(el, gameKey) {
-    var cancelDragging;
-    var state = {
+    let cancelDragging;
+
+    const state = {
         down: false,
         dragging: false,
         zooming: false,
@@ -14,20 +15,21 @@ function attachDragEvents(el, gameKey) {
     };
 
     if (hasTouch()) {
-        el.addEventListener('touchstart', function(e) {
+        el.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2 && !state.dragging) {
                 clearTimeout(cancelDragging);
                 state.zooming = true;
                 state.pinch = pinchDistance(e.touches.item(0), e.touches.item(1));
                 return;
             }
+
             state.down = true;
             state.x = e.touches.item(0).clientX;
             state.y = e.touches.item(0).clientY;
             cancelDragging = setTimeout(function() { state.dragging = true }, 200);
         });
     
-        el.addEventListener('touchend', function(e) {
+        el.addEventListener('touchend', (e) => {
             clearTimeout(cancelDragging);
             
             if (!state.dragging && !state.zooming) {
@@ -39,9 +41,9 @@ function attachDragEvents(el, gameKey) {
             state.zooming = false;
         });
     
-        el.addEventListener('touchmove', function(e) {
+        el.addEventListener('touchmove', (e) => {
             if (state.zooming) {
-                var pinch = pinchDistance(e.touches.item(0), e.touches.item(1));
+                const pinch = pinchDistance(e.touches.item(0), e.touches.item(1));
                 draw.zoom(pinch / state.pinch);
                 state.pinch = pinch;
                 return;
@@ -60,14 +62,14 @@ function attachDragEvents(el, gameKey) {
         return state;
     }
     
-    el.addEventListener('mousedown', function(e) {
+    el.addEventListener('mousedown', (e) => {
         state.down = true;
         state.x = e.clientX;
         state.y = e.clientY;
-        cancelDragging = setTimeout(function() { state.dragging = true }, 200);
+        cancelDragging = setTimeout(() => state.dragging = true, 200);
     });
 
-    el.addEventListener('mouseup', function(e) {
+    el.addEventListener('mouseup', (e) => {
         clearTimeout(cancelDragging);
 
         if (!state.dragging) {
@@ -78,7 +80,7 @@ function attachDragEvents(el, gameKey) {
         state.down = false;
     });
 
-    el.addEventListener('mousemove', function(e) {
+    el.addEventListener('mousemove', (e) => {
         if (state.down) {
             state.dragging = true;
             draw.move(e.clientX - state.x, e.clientY - state.y);

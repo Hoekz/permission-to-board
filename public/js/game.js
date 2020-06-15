@@ -1,5 +1,5 @@
 
-var dom = {
+const dom = {
     players: $$('[players]'),
     tokens: $$('[tokens]'),
     key: $$('[key]'),
@@ -18,17 +18,15 @@ var dom = {
     onTurn: $$('[on-turn]')[0],
 };
 
-function text(str, attr) {
-    var el = document.createElement('span');
-    if (attr) {
-        attr.split(' ').forEach(function(a) { el.setAttribute(a, '') });
-    }
+function text(str, attr = '') {
+    const el = document.createElement('span');
+    attr.split(' ').filter(a => a).forEach((a) => el.setAttribute(a, ''));
     el.innerHTML = str;
     return el;
 }
 
 function button(color, label, onClick) {
-    var el = document.createElement('button');
+    const el = document.createElement('button');
 
     el.innerHTML = label;
     el.setAttribute('btn', '');
@@ -39,7 +37,7 @@ function button(color, label, onClick) {
 }
 
 function token(color) {
-    var el = document.createElement('button');
+    const el = document.createElement('button');
 
     el.setAttribute('token', '');
     el.setAttribute(color, '');
@@ -48,17 +46,13 @@ function token(color) {
 }
 
 function group(children) {
-    var el = document.createElement('div');
-
-    children.forEach(function(child) {
-        el.appendChild(child);
-    });
-
+    const el = document.createElement('div');
+    children.forEach((child) => el.appendChild(child));
     return el;
 }
 
 function player(color, name, score, trains, isCurrent) {
-    var el = document.createElement('div');
+    const el = document.createElement('div');
     el.setAttribute('player', '');
 
     el.appendChild(group([token(color), text(name)]));
@@ -72,7 +66,7 @@ function player(color, name, score, trains, isCurrent) {
 }
 
 function endPlayer(color, name, score, longest, winner) {
-    var el = document.createElement('div');
+    const el = document.createElement('div');
     el.setAttribute('player', '');
 
     el.appendChild(group([token(color), text(name)]));
@@ -82,7 +76,7 @@ function endPlayer(color, name, score, longest, winner) {
 }
 
 function card(color, count) {
-    var el = document.createElement('div');
+    const el = document.createElement('div');
 
     el.setAttribute(color, '');
     el.setAttribute('card', '');
@@ -95,32 +89,26 @@ function card(color, count) {
 }
 
 function routeCard(start, end, worth, completed) {
-    var startEl = text(start);
-    startEl.className = 'start';
+    const el = document.createElement('div');
+    el.setAttribute('route', '');
 
-    var endEl = text(end);
-    endEl.className = 'end';
+    if (completed) {
+        el.setAttribute('completed', '');
+    }
 
-    var worthEl = text(worth);
-    worthEl.className = 'worth';
-
-    var el = document.createElement('div');
-    el.className = completed ? 'route completed' : 'route';
-    el.appendChild(startEl);
-    el.appendChild(endEl);
-    el.appendChild(worthEl);
+    el.appendChild(text(start, 'start'));
+    el.appendChild(text(end, 'end'));
+    el.appendChild(text(worth, 'worth'));
 
     return el;
 }
 
 function newRouteCard(key) {
-    var el = document.createElement('div');
-    el.className = 'new route';
+    const el = document.createElement('div');
+    el.setAttribute('new', '');
+    el.setAttribute('route', '');
 
-    var worthEl = text('+');
-    worthEl.className = 'worth';
-
-    el.appendChild(worthEl);
+    el.appendChild(text('+', 'worth'));
 
     el.addEventListener('click', api.getRoutes.bind(null, { key: db.parseId(key) }));
 
@@ -134,11 +122,11 @@ function select(route, key) {
 
     dom.selected.innerHTML = '';
 
-    var play = button('green', 'Play', function() {
+    const play = button('green', 'Play', () => {
         if (route.color !== 'any') {
-            return api.playPath({ key: key, start: route.start, end: route.end }).then(function() {
-                select(null);
-            });
+            return api.playPath({
+                key: key, start: route.start, end: route.end
+            }).then(selectNone);
         }
 
         db.currentGame.routeToBePlayed = route;
@@ -150,21 +138,25 @@ function select(route, key) {
         play.setAttribute('disabled', '');
     }
 
-    var cancel = button('red', 'Cancel', function() {
-        dom.selected.setAttribute('hide', '');
-        draw.highlight({ x: -10000, y: -10000 });
-    });
+    const cancel = button('red', 'Cancel', selectNone);
 
     dom.selected.appendChild(text('From: ' + route.start));
     dom.selected.appendChild(text('To: ' + route.end));
     dom.selected.appendChild(text('Requires: ' + route.length + ' ' + route.color));
+
     if (route.occupant) {
         dom.selected.appendChild(text('Owner: ' + route.occupant));
     } else {
         dom.selected.appendChild(play);
     }
+
     dom.selected.appendChild(cancel);
     dom.selected.removeAttribute('hide');
+}
+
+function selectNone() {
+    select(null);
+    draw.highlight({ x: -10000, y: -10000 });
 }
 
 function notHidden(el) {
@@ -179,17 +171,13 @@ function leaveGame() {
     }
 }
 
-var rendered = false;
+let rendered = false;
 function onUpdate(game) {
     db.currentGame = game;
 
     if (game.started) {
         if (router.route() === '/join/share') {
             router.update('/game');
-        }
-
-        if (router.route() === '/display') {
-
         }
 
         if (game.routeToBePlayed) {
@@ -199,33 +187,31 @@ function onUpdate(game) {
         }
 
         if (game.started === 'finished') {
-            if (router.route().indexOf('/game') === 0) {
+            if (router.route().startsWith('/game')) {
                 router.update('/game/scores');
             }
     
             dom.onTurn.innerHTML = 'Game Over!';
-            dom.players.forEach(function(el) {
+            dom.players.forEach((el) => {
                 el.innerHTML = '';
                 
                 for(let i = 0; i < game.order.length; i++) {
-                    var color = game.order[i];
-                    var details = game.players[color];
+                    const color = game.order[i];
+                    const details = game.players[color];
         
-                    el.appendChild(endPlayer(color, details.name, details.score, details.hasLongestTrain, details.winner))
+                    el.appendChild(endPlayer(color, details.name, details.score, details.hasLongestTrain, details.winner));
                 }
 
                 el.appendChild(button('red', 'Leave Game', leaveGame));
             });
-
-            $$('[nav] [btn]:last-child')[0].removeAttribute('hide');
         } else {
-            dom.players.forEach(function(el) {
+            dom.players.forEach((el) => {
                 el.innerHTML = '';
                 
                 for(let i = 0; i < game.order.length; i++) {
-                    var color = game.order[i];
-                    var isCurrent = color === game.current.player;
-                    var details = game.players[color];
+                    const color = game.order[i];
+                    const isCurrent = color === game.current.player;
+                    const details = game.players[color];
         
                     el.appendChild(player(color, details.name, details.score, details.trains, isCurrent))
                 }
@@ -235,33 +221,31 @@ function onUpdate(game) {
         }
 
     
-        dom.hand.forEach(function(el) {
+        dom.hand.forEach((el) => {
             el.innerHTML = '';
 
             if (!game.me) {
                 return;
             }
 
-            var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'locomotive', 'black', 'white'];
+            const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'locomotive', 'black', 'white'];
     
-            for (var i = 0; i < colors.length; i++) {
-                const option = card(colors[i], game.me.hand[colors[i]] || 0);
+            for (const color of colors) {
+                const option = card(color, game.me.hand[color] || 0);
 
                 if (game.routeToBePlayed) {
-                    const action = api.playPath.bind(null, {
-                        key: db.parseId(game.key),
-                        start: game.routeToBePlayed.start,
-                        end: game.routeToBePlayed.end,
-                        color: colors[i]
-                    });
+                    option.addEventListener('click', () => {
+                        option.setAttribute('active', '');
 
-                    option.addEventListener('click', function() {
-                        this.setAttribute('active', '');
-
-                        action().then((function() {
-                            this.removeAttribute('active');
-                            select(null);
-                        }).bind(this));
+                        api.playPath({
+                            key: db.parseId(game.key),
+                            start: game.routeToBePlayed.start,
+                            end: game.routeToBePlayed.end,
+                            color: color
+                        }).then((function() {
+                            option.removeAttribute('active');
+                            selectNone();
+                        }));
                     });
                 }
 
@@ -269,16 +253,14 @@ function onUpdate(game) {
             }
         });
 
-        dom.routes.forEach(function(el) {
+        dom.routes.forEach((el) => {
             el.innerHTML = '';
 
             if (!game.me || !game.me.routes) {
                 return;
             }
 
-            for (var i = 0; i < game.me.routes.length; i++) {
-                var route = game.me.routes[i];
-
+            for (const route of game.me.routes) {
                 if (route.chosen) {
                     el.appendChild(routeCard(route.start, route.end, route.worth, route.completed));
                 }
@@ -287,39 +269,39 @@ function onUpdate(game) {
             el.appendChild(newRouteCard(game.key));
         });
 
-        dom.routeOpts.forEach(function(el) {
+        dom.routeOpts.forEach((el) => {
             if (!game.me || !game.me.routes) {
                 return;
             }
 
-            var needsToChoose = false;
-            var chosen = [];
-            function toggle(route, card) {
-                var found = false;
+            let needsToChoose = false;
+            const chosen = [];
 
-                for(var i = 0; i < chosen.length; i++) {
+            function toggle(route, card) {
+                let found = false;
+
+                for(let i = 0; i < chosen.length; i++) {
                     if (chosen[i] === route) {
                         found = true;
                         chosen.splice(i, 1);
-                        card.className = 'route';
+                        card.removeAttribute('chosen');
                         break;
                     }
                 }
 
                 if (!found) {
-                    card.className = 'chosen route';
+                    card.setAttribute('chosen', '');
                     chosen.push(route);
                 }
             }
+
             el.innerHTML = '';
 
-            for (var i = 0; i < game.me.routes.length; i++) {
-                var route = game.me.routes[i];
-
+            for (const route of game.me.routes) {
                 if (!route.chosen) {
                     needsToChoose = true;
-                    var now = routeCard(route.start, route.end, route.worth);
-                    now.addEventListener('click', toggle.bind(null, route, now));
+                    const now = routeCard(route.start, route.end, route.worth);
+                    now.addEventListener('click', () => toggle(route, now));
                     el.appendChild(now);
                 }
             }
@@ -343,27 +325,25 @@ function onUpdate(game) {
             }
         });
     
-        dom.deck.forEach(function(el) {
+        dom.deck.forEach((el) => {
             el.innerHTML = '';
     
-            for (var slot in game.slots) {
+            for (const slot in game.slots) {
                 const option = card(game.slots[slot]);
                 const action = api.takeCard.bind(null, {
                     key: db.parseId(game.key),
                     slot: slot
                 });
 
-                option.addEventListener('click', function() {
-                    this.setAttribute('active', '');
-                    action().then((function() {
-                        this.removeAttribute('active');
-                    }).bind(this))
+                option.addEventListener('click', () => {
+                    option.setAttribute('active', '');
+                    action().then(() => option.removeAttribute('active'));
                 });
 
                 el.appendChild(option);
             }
 
-            var back = card('back');
+            const back = card('back');
             back.addEventListener('click', api.drawCard.bind(null, { key: db.parseId(game.key) }));
             el.appendChild(back);
         });
@@ -374,26 +354,25 @@ function onUpdate(game) {
             dom.game.removeAttribute('my-turn');
         }
     } else {
-        dom.tokens.forEach(function(el) {
-            var key = game.key || dom.joinSearch.value;
+        dom.tokens.forEach((el) => {
+            const key = game.key || dom.joinSearch.value;
             el.innerHTML = '';
     
-            colors = ['red', 'yellow', 'green', 'blue', 'black'];
+            const colors = ['red', 'yellow', 'green', 'blue', 'black'];
     
-            for (var i = 0; i < colors.length; i++) {
-                var color = colors[i];
+            for (const color of colors) {
                 if (!(color in game.players)) {
-                    var colorToken = token(color);
+                    const colorToken = token(color);
+                    colorToken.addEventListener('click', () => api.joinGame({ key: db.parseId(key), color: color }));
                     el.appendChild(colorToken);
-                    colorToken.addEventListener('click', api.joinGame.bind(null, { key: db.parseId(key), color: color }));
                 }
             }
         });
 
-        dom.players.forEach(function(el) {
+        dom.players.forEach((el) => {
             el.innerHTML = '';
             
-            for(var color in game.players) {
+            for(const color in game.players) {
                 var details = game.players[color];
     
                 el.appendChild(player(color, details.name, 0, details.trains, false));
@@ -406,19 +385,17 @@ function onUpdate(game) {
             dom.start.removeAttribute('disabled');
         }
 
-        if (game.me && router.route().indexOf('color') > -1) {
+        if (game.me && router.route().includes('/color')) {
             router.update(router.route().replace('/color', '/share'));
         }
     }
 
-    dom.key.forEach(function(el) {
-        el.innerHTML = game.key;
-    });
+    dom.key.forEach((el)  => el.innerHTML = game.key);
 
-    dom.board.forEach(function(el) {
+    dom.board.forEach((el) => {
         if (!rendered && notHidden(el)) {
             attachDragEvents(el, db.parseId(game.key));
-
+            
             draw.surface(el.getContext('2d'));
             draw.size(game.board.size);
             draw.cities(game.board.points);
@@ -428,62 +405,62 @@ function onUpdate(game) {
         draw.paths(game.board.connections);
     });
 
-
     localStorage.setItem('game-key', game.key);
 }
 
-dom.joinFind.addEventListener('click', function() {
-    var key = dom.joinSearch.value;
+dom.joinFind.addEventListener('click', () => {
+    const key = dom.joinSearch.value;
 
     if (!key || key.length !== 4) {
         return alert('Enter a 4 character game key.');
     }
 
-    db.isGame(key).then(function(game) {
+    db.isGame(key).then((game) => {
         if (!game || (game.started && !game.me)) {
             return alert('Game not found or has already started.');
         }
 
+        localStorage.setItem('game-key', game.key);
         db.watchGame(key, onUpdate);
         router.update(game.started ? '/game' : '/join/color');
     });
 });
 
-dom.displayFind.addEventListener('click', function() {
-    var key = dom.displaySearch.value;
+dom.displayFind.addEventListener('click', () => {
+    const key = dom.displaySearch.value;
 
     if (!key || key.length !== 4) {
         return alert('Enter a 4 character game key.');
     }
 
-    db.isGame(key).then(function(isGame) {
+    db.isGame(key).then((isGame) => {
         if (!isGame) {
             return alert('Game not found.');
         }
 
+        localStorage.setItem('game-key', game.key);
         db.watchGame(key, onUpdate);
         router.update('/display/game');
     });
 });
 
-dom.start.addEventListener('click', function() {
-    var key  = localStorage.getItem('game-key');
+dom.start.addEventListener('click', () => {
+    const key = localStorage.getItem('game-key');
 
     if (!key) {
+        alert('No game key found.');
         return router.update('/landing');
     }
 
-    api.startGame({ key: db.parseId(key) }).then(function() {
-        router.update('/game');
-    });
+    api.startGame({ key: db.parseId(key) }).then(() => router.update('/game'));
 });
 
-window.addEventListener('load', function() {
-    var key = localStorage.getItem('game-key');
-    var version = localStorage.getItem('app-version');
+window.addEventListener('load', () => {
+    const key = localStorage.getItem('game-key');
+    const version = localStorage.getItem('app-version');
 
     if (key) {
-        db.isGame(key).then(function(game) {
+        db.isGame(key).then((game) => {
             if (!game || game.started === 'finished') {
                 db.stopWatching();
                 return router.update('/landing');
@@ -493,7 +470,7 @@ window.addEventListener('load', function() {
         });
     }
 
-    db.version().then(function(dbVersion) {
+    db.version().then((dbVersion) => {
         if (version && version !== dbVersion) {
             localStorage.removeItem('app-version');
             window.location.reload(true);
@@ -509,39 +486,34 @@ window.addEventListener('load', function() {
     }
 });
 
-function createGame(color) {
-    return function() {
-        api.createGame({ color: color }).then(function(res) {
-            db.watchGame(res.key, onUpdate);
-            router.update('/create/share');
-        });
-    }
-}
+const createGame = (color) => () => {
+    api.createGame({ color: color }).then((res) => {
+        db.watchGame(res.key, onUpdate);
+        router.update('/create/share');
+    });
+};
 
-router.onEnter('/create/color', function() {
+router.onEnter('/create/color', () => {
     authorize();
-    dom.tokens.forEach(function(el) {
+    dom.tokens.forEach((el) => {
         el.innerHTML = '';
 
-        colors = ['red', 'yellow', 'green', 'blue', 'black'];
+        const colors = ['red', 'yellow', 'green', 'blue', 'black'];
     
-        for (var i = 0; i < colors.length; i++) {
-            var color = colors[i];
+        for (const color of colors) {
             var colorToken = token(color);
-            el.appendChild(colorToken);
             colorToken.addEventListener('click', createGame(color));
+            el.appendChild(colorToken);
         }
     });
 });
 
-router.onEnter('/landing', function() {
+router.onEnter('/landing', () => {
     document.body.setAttribute('style', 'animation: scroll linear 120s infinite;');
     localStorage.removeItem('game-key');
 });
 
-router.onLeave('/landing', function() {
-    document.body.removeAttribute('style');
-});
+router.onLeave('/landing', () => document.body.removeAttribute('style'));
 
 router.onEnter('/join/find', authorize);
 router.onEnter('/display/find', authorize);
@@ -554,18 +526,20 @@ function resetRoute() {
 }
 
 function back(color) {
-    var el = $$('[game] [nav] [' + color + ']')[0];
+    const el = $$('[game] [nav] [' + color + ']')[0];
     el.oldRoute = el.getAttribute('nav-to');
     el.oldText = el.innerHTML;
-    return function() {
+
+    return () => {
         el.innerHTML = 'Back';
         el.setAttribute('nav-to', '/game');
     }
 }
 
 function reset(color) {
-    var el = $$('[game] [nav] [' + color + ']')[0];
-    return function() {
+    const el = $$('[game] [nav] [' + color + ']')[0];
+
+    return () => {
         resetRoute();
         el.innerHTML = el.oldText;
         el.setAttribute('nav-to', el.oldRoute);

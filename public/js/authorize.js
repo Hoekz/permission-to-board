@@ -1,42 +1,25 @@
-var authorize = (function() {
-    var user = null;
-    var started = false;
-    var success = [];
-    var failure = [];
+const authorize = (function() {
+    let authPromise = null;
 
     function doAuth() {
-        started = true;
-        var provider = new firebase.auth.GoogleAuthProvider();
+        const provider = new firebase.auth.GoogleAuthProvider();
 
-        firebase.auth().onAuthStateChanged(function(usr) {
-            if (!usr) {
+        let resolve, reject;
+        authPromise = new Promise((res, rej) => (resolve = res, reject = rej));
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (!user) {
                 console.log('need to login');
-                firebase.auth().signInWithRedirect(provider).then(function(result) {
-                    user = result.user;
-                    success.forEach(function(res) {
-                        res(user);
-                    });
-                }).catch(function(err) {
-                    failure.forEach(function(rej) {
-                        rej(err);
-                    });
-                });
+                firebase.auth().signInWithRedirect(provider)
+                    .then((result) => resolve(result.user))
+                    .catch((err) => reject(err));
             } else {
-                user = usr;
-                success.forEach(function(res) {
-                    res(user);
-                });
+                resolve(user);
             }
         });
+
+        return authPromise;
     }
 
-    return function() {
-        if (!started) doAuth();
-        if (user) return Promise.resolve(user);
-
-        return new Promise(function(res, rej) {
-            success.push(res);
-            failure.push(rej);
-        });
-    };
+    return () => authPromise || doAuth();
 })();

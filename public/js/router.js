@@ -34,8 +34,8 @@ var router = (function() {
             history.pushState(null, null, '#' + url);
         }
 
-        $$('[route]').forEach(function(el) {
-            if (url.indexOf(el.getAttribute('route')) === 0) {
+        $$('[page]').forEach(function(el) {
+            if (url.indexOf(el.getAttribute('page')) === 0) {
                 el.removeAttribute('hide');
             } else {
                 el.setAttribute('hide', '');

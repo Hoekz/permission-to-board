@@ -1,19 +1,20 @@
-var draw = (function() {
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
+const draw = (function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = {x: 0, y: 0};
 
-    var surface = null;
-    var cities = {};
-    var paths = [];
-    var scale = 1;
-    var shift = {x: 0, y: 0};
-    var size = {x: 0, y: 0};
-    var showNames = true;
-    var click = {x: 0, y: 0};
-    var selected = null;
-    var redraw = false;
-    var shadowOfMap = null;
-    var colors = {
+    let surface = null;
+    let cities = {};
+    let paths = [];
+    let scale = 1;
+    let shift = {x: 0, y: 0};
+    let showNames = true;
+    let click = {x: 0, y: 0};
+    let selected = null;
+    let redraw = false;
+    let shadowOfMap = null;
+
+    const colors = {
         red:    '#a33',
         orange: '#c73',
         yellow: '#ba3',
@@ -25,11 +26,11 @@ var draw = (function() {
         any:    '#999'
     };
 
-    var img = new Image();
+    const img = new Image();
     img.src = 'img/city.png';
 
     function center() {
-        var viewport = {
+        const viewport = {
             xmin: 0,
             ymin: 0,
             xmax: Math.max(window.innerWidth - 20 * 16, window.innerWidth * 0.5),
@@ -40,21 +41,20 @@ var draw = (function() {
             viewport.xmax = window.innerWidth;
         }
 
-        var vcx = (viewport.xmin + viewport.xmax) / 2;
-        var vcy = (viewport.ymin + viewport.ymax) / 2;
+        const vcx = (viewport.xmin + viewport.xmax) / 2;
+        const vcy = (viewport.ymin + viewport.ymax) / 2;
 
-        var scx = (cities[selected.start].x + cities[selected.end].x) / 2;
-        var scy = (cities[selected.start].y + cities[selected.end].y) / 2;
+        const scx = (cities[selected.start].x + cities[selected.end].x) / 2;
+        const scy = (cities[selected.start].y + cities[selected.end].y) / 2;
 
-        var tcx = (innerWidth - size.x) / 2;
-        var tcy = (innerHeight - size.y) / 2;
+        const tcx = (innerWidth - size.x) / 2;
+        const tcy = (innerHeight - size.y) / 2;
 
         shift.x = vcx - tcx - scx;
         shift.y = vcy - tcy - scy;
     }
 
     function drawPath(start, pts, end, occupant) {
-        
         if (occupant) {
             ctx.strokeStyle = ctx.fillStyle = colors[occupant];
 
@@ -72,7 +72,7 @@ var draw = (function() {
         }
 
 
-        pts.forEach(function(pt) {
+        pts.forEach((pt) => {
             ctx.beginPath();
             ctx.arc(pt.x, pt.y, ctx.lineWidth / 2 + 4, 0, 2 * Math.PI, false);
             ctx.fill();
@@ -82,14 +82,14 @@ var draw = (function() {
     function shadow() {
         if (!size.x || !size.y) return;
 
-        var cvs = document.createElement('canvas');
+        const cvs = document.createElement('canvas');
         cvs.width = size.x;
         cvs.height = size.y;
-        var shadowCtx = cvs.getContext('2d');
+        const shadowCtx = cvs.getContext('2d');
         shadowCtx.globalAlpha = 0.01;
         shadowCtx.fillStyle = 'black';
 
-        for (var i = 0; i < 50; i++) {
+        for (let i = 0; i < 50; i++) {
             shadowCtx.fillRect(i, i, size.x - i * 2, size.y - i * 2);
         }
 
@@ -101,12 +101,9 @@ var draw = (function() {
         canvas.height = size.y;
         ctx.clearRect(0, 0, size.x, size.y);
 
-        paths.forEach(function(path) {
-            var isDbl = paths.find(function(p) {
-                return p.start === path.end && p.end === path.start;
-            });
-
-            var pts = arc(cities[path.start], cities[path.end], path.length, isDbl);
+        paths.forEach((path) => {
+            const isDbl = paths.find((p) => p.start === path.end && p.end === path.start);
+            const pts = arc(cities[path.start], cities[path.end], path.length, isDbl);
 
             if (onPath(pts, click.x, click.y) && !selected) {
                 ctx.fillStyle = ctx.strokeStyle = '#000';
@@ -131,9 +128,11 @@ var draw = (function() {
             drawPath(cities[path.start], pts, cities[path.end], path.occupant);
         });
 
-        Object.keys(cities).forEach(function(name) {
-            var city = cities[name];
-            var active = selected && (name === selected.start || name === selected.end);
+        Object.keys(cities).forEach((name) => {
+            const city = cities[name];
+            const active = selected && (name === selected.start || name === selected.end);
+            const capName = name.split(' ').map((s) => s[0].toUpperCase() + s.substr(1)).join(' ');
+
             ctx.drawImage(img, city.x - 10, city.y - 10);
 
             if (showNames) {
@@ -141,11 +140,8 @@ var draw = (function() {
                 ctx.fillStyle = '#fff';
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = active ? 3 : 2;
-                name = name.split(' ').map(function(s) {
-                    return s[0].toUpperCase() + s.substr(1);
-                }).join(' ');
-                ctx.strokeText(name, city.x + 8 - 50 * city.x / size.x, city.y - 16);
-                ctx.fillText(name, city.x + 8 - 50 * city.x / size.x, city.y - 16);
+                ctx.strokeText(capName, city.x + 8 - 50 * city.x / size.x, city.y - 16);
+                ctx.fillText(capName, city.x + 8 - 50 * city.x / size.x, city.y - 16);
             }
         });
     }
@@ -165,8 +161,9 @@ var draw = (function() {
         }
 
         if (surface) {
-            var w = surface.canvas.width = window.innerWidth;
-            var h = surface.canvas.height = window.innerHeight;
+            const w = surface.canvas.width = window.innerWidth;
+            const h = surface.canvas.height = window.innerHeight;
+
             surface.clearRect(0, 0, w, h);
             surface.save();
             surface.translate(shift.x, shift.y);
@@ -181,36 +178,34 @@ var draw = (function() {
         return selected;
     }
 
-    function drawAfter(f) {
-        return function() {
-            f.apply(null, arguments);
-            return draw(shift.x, shift.y, scale);
-        }
-    }
+    const drawAfter = (f) => (...args) => {
+        f(...args);
+        return draw(shift.x, shift.y, scale);
+    };
 
     return {
-        size: drawAfter(function(s) { size = s; }),
-        surface: drawAfter(function(s) { surface = s; }),
-        cities: drawAfter(function(c) { cities = c; }),
-        paths: drawAfter(function(p) { paths = p; }),
-        showNames: drawAfter(function(b) { showNames = b; }),
-        highlight: drawAfter(function(p) {
+        size: drawAfter((s) => Object.assign(size, s)),
+        surface: drawAfter((s) => surface = s),
+        cities: drawAfter((c) => cities = c),
+        paths: drawAfter((p) => paths = p),
+        showNames: drawAfter((b) => showNames = b),
+        highlight: drawAfter((p) => {
             selected = null;
             click = p;
-            var w = surface.canvas.width = window.innerWidth;
-            var h = surface.canvas.height = window.innerHeight;
+            const w = surface.canvas.width = window.innerWidth;
+            const h = surface.canvas.height = window.innerHeight;
             click.x -= scale * (shift.x + (w - size.x) / 2);
             click.y -= scale * (shift.y + (h - size.y) / 2);
         }),
-        selected: function() { return selected; },
-        move: drawAfter(function(dx, dy) {
+        selected: () => selected,
+        move: drawAfter((dx, dy) => {
             shift.x += dx * scale;
             shift.y += dy * scale;
             shift.x = Math.max(-size.x / 2, Math.min(size.x / 2, shift.x));
             shift.y = Math.max(-size.y / 2, Math.min(size.y / 2, shift.y));
             redraw = false;
         }),
-        zoom: drawAfter(function(dz) {
+        zoom: drawAfter((dz) => {
             scale *= dz;
             redraw = false;
         })
