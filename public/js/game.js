@@ -171,7 +171,6 @@ function leaveGame() {
     }
 }
 
-let rendered = false;
 function onUpdate(game) {
     db.currentGame = game;
 
@@ -393,13 +392,12 @@ function onUpdate(game) {
     dom.key.forEach((el)  => el.innerHTML = game.key);
 
     dom.board.forEach((el) => {
-        if (!rendered && notHidden(el)) {
-            attachDragEvents(el, db.parseId(game.key));
-            
+        attachDragEvents(el, db.parseId(game.key));
+
+        if (!notHidden(el)) {
             draw.surface(el.getContext('2d'));
             draw.size(game.board.size);
             draw.cities(game.board.points);
-            rendered = true;
         }
         
         draw.paths(game.board.connections);

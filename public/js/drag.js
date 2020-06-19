@@ -3,9 +3,15 @@ function hasTouch() {
 }
 
 function attachDragEvents(el, gameKey) {
+    if (el.draggable) {
+        el.draggable.key = gameKey;
+        return el.draggable;
+    }
+
     let cancelDragging;
 
     const state = {
+        key: gameKey,
         down: false,
         dragging: false,
         zooming: false,
@@ -33,7 +39,7 @@ function attachDragEvents(el, gameKey) {
             clearTimeout(cancelDragging);
             
             if (!state.dragging && !state.zooming) {
-                select(draw.highlight(state), gameKey);
+                select(draw.highlight(state), state.key);
             }
             
             state.down = false;
@@ -73,7 +79,7 @@ function attachDragEvents(el, gameKey) {
         clearTimeout(cancelDragging);
 
         if (!state.dragging) {
-            select(draw.highlight({ x: e.clientX, y: e.clientY }), gameKey);
+            select(draw.highlight({ x: e.clientX, y: e.clientY }), state.key);
         }
 
         state.dragging = false;
@@ -88,6 +94,8 @@ function attachDragEvents(el, gameKey) {
             state.y = e.clientY;
         }
     });
+
+    el.draggable = state;
 
     return state;
 }
