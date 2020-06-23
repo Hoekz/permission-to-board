@@ -5,13 +5,13 @@ function slice(arr) {
     return newArr;
 }
 
-function $$(selector) {
-    return slice(document.querySelectorAll(selector));
-}
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => slice(document.querySelectorAll(selector));
 
-var router = (function() {
-    var routes = {};
-    var lastRoute = localStorage.getItem('last-route') || '';
+const router = (function() {
+    const routes = {};
+    const lastRoute = localStorage.getItem('last-route') || '';
+    let onload = () => {};
 
     function bindRoutes() {
         $$('[nav-to]').forEach(function(el) {
@@ -54,12 +54,13 @@ var router = (function() {
         }
     }
 
-    window.addEventListener('load', function() {
+    window.addEventListener('load', () => {
         bindRoutes();
+        onload();
         updateRoute(location.hash.slice(1) || '/');
     });
 
-    window.addEventListener('hashchange', function() {
+    window.addEventListener('hashchange', () => {
         if (lastRoute !== location.hash.slice(1)) {
             updateRoute(location.hash.slice(1));
         }
@@ -70,15 +71,16 @@ var router = (function() {
     }
 
     return {
-        onEnter: function(url, fn) {
+        onEnter: (url, fn) => {
             routes[url] = routes[url] || {};
             routes[url].enter = fn;
         },
-        onLeave: function(url, fn) {
+        onLeave: (url, fn) => {
             routes[url] = routes[url] || {};
             routes[url].leave = fn;
         },
-        route: function() { return lastRoute; },
+        onStart: (fn) => onload = fn,
+        route: () => lastRoute,
         update: updateRoute
     };
 })();

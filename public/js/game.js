@@ -3,20 +3,47 @@ const dom = {
     players: $$('[players]'),
     tokens: $$('[tokens]'),
     key: $$('[key]'),
-    joinSearch: $$('[join] [search]')[0],
-    joinFind: $$('[join] [find]')[0],
-    displaySearch: $$('[display] [search]')[0],
-    displayFind: $$('[display] [find]')[0],
-    board: $$('[board]'),
+    joinSearch: $('[join] [search]'),
+    joinFind: $('[join] [find]'),
+    displaySearch: $('[display] [search]'),
+    displayFind: $('[display] [find]'),
+    displayBoard: $('[display] [board]'),
     hand: $$('[hand]'),
     routes: $$('[routes][view]'),
-    routeOpts: $$('[routes][choose]'),
+    routeOpts: $('[routes][choose]'),
     deck: $$('[deck]'),
-    start: $$('[start]')[0],
-    selected: $$('[selected]')[0],
-    game: $$('[game]')[0],
-    onTurn: $$('[on-turn]')[0],
+    start: $('[start]'),
+    selected: $('[selected]'),
+    game: $('[game]'),
+    gameBoard: $('[game] [board]'),
+    onTurn: $('[on-turn]')
 };
+
+const cardColors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'locomotive', 'black', 'white'];
+
+const withElement = (fn) => (el, ...args) => typeof el === 'string' ? fn(dom[el], ...args) : fn(el, ...args);
+
+const update = withElement((el, children) => {
+    if (el instanceof Array) {
+        return el.forEach(item => update(item, children));
+    }
+
+    if (typeof children === 'string') {
+        return el.innerHTML = children;
+    }
+
+    el.innerHTML = '';
+    children.forEach(child => el.appendChild(child.cloneNode(true)));
+});
+
+const onClick = withElement((el, listener) => {
+    el.addEventListener('click', listener);
+    return el;
+});
+
+const value = withElement((el) => el.value);
+const show = withElement((el) => el.removeAttribute('hide'));
+const hide = withElement((el) => el.setAttribute('hide', ''));
 
 function text(str, attr = '') {
     const el = document.createElement('span');
@@ -51,12 +78,15 @@ function group(children) {
     return el;
 }
 
-function player(color, name, score, trains, isCurrent) {
+function player(color, player, isCurrent) {
     const el = document.createElement('div');
     el.setAttribute('player', '');
 
-    el.appendChild(group([token(color), text(name)]));
-    el.appendChild(group([text(score || 0, 'score info'), text(trains, 'train-count info')]));
+    el.appendChild(group([token(color), text(player.name)]));
+    el.appendChild(group([
+        text(player.score || 0, 'score info'),
+        text(player.trains, 'train-count info')
+    ]));
 
     if (isCurrent) {
         el.setAttribute('active', '');
@@ -65,12 +95,16 @@ function player(color, name, score, trains, isCurrent) {
     return el;
 }
 
-function endPlayer(color, name, score, longest, winner) {
+function endPlayer(color, player) {
     const el = document.createElement('div');
     el.setAttribute('player', '');
 
-    el.appendChild(group([token(color), text(name)]));
-    el.appendChild(group([text('', winner ? 'crown' : ''), text('', longest ? 'train-count' : ''), text(score, 'info')]));
+    el.appendChild(group([token(color), text(player.name)]));
+    el.appendChild(group([
+        text('', player.winner ? 'crown' : ''),
+        text('', player.hasLongestTrain ? 'train-count' : ''),
+        text(player.score, 'info')
+    ]));
 
     return el;
 }
@@ -88,17 +122,17 @@ function card(color, count) {
     return el;
 }
 
-function routeCard(start, end, worth, completed) {
+function routeCard(route) {
     const el = document.createElement('div');
     el.setAttribute('route', '');
 
-    if (completed) {
+    if (route.completed) {
         el.setAttribute('completed', '');
     }
 
-    el.appendChild(text(start, 'start'));
-    el.appendChild(text(end, 'end'));
-    el.appendChild(text(worth, 'worth'));
+    el.appendChild(text(route.start, 'start'));
+    el.appendChild(text(route.end, 'end'));
+    el.appendChild(text(route.worth, 'worth'));
 
     return el;
 }
@@ -110,7 +144,7 @@ function newRouteCard(key) {
 
     el.appendChild(text('+', 'worth'));
 
-    el.addEventListener('click', api.getRoutes.bind(null, { key: db.parseId(key) }));
+    el.addEventListener('click', () => api.getRoutes({ key: db.parseId(key) }));
 
     return el;
 }
@@ -179,173 +213,96 @@ function onUpdate(game) {
             router.update('/game');
         }
 
+        update('onTurn', game.lastTurn ? 'Last Turn!' : 'Your Turn');
+
         if (game.routeToBePlayed) {
-            dom.onTurn.innerHTML = 'Choose a color to play. Locomotives will be used as necessary.';
-        } else {
-            dom.onTurn.innerHTML = game.lastTurn ? 'Last Turn!' : 'Your Turn';
+            update('onTurn', 'Choose a color to play. Locomotives will be used as necessary.');
         }
 
         if (game.started === 'finished') {
             if (router.route().startsWith('/game')) {
                 router.update('/game/scores');
             }
-    
-            dom.onTurn.innerHTML = 'Game Over!';
-            dom.players.forEach((el) => {
-                el.innerHTML = '';
-                
-                for(let i = 0; i < game.order.length; i++) {
-                    const color = game.order[i];
-                    const details = game.players[color];
-        
-                    el.appendChild(endPlayer(color, details.name, details.score, details.hasLongestTrain, details.winner));
-                }
 
-                el.appendChild(button('red', 'Leave Game', leaveGame));
-            });
+            update('onTurn', 'Game Over!');
+            update('players', [
+                ...game.order.map(color => endPlayer(color, game.players[color])),
+                button('red', 'Leave Game', leaveGame)
+            ]);
         } else {
-            dom.players.forEach((el) => {
-                el.innerHTML = '';
-                
-                for(let i = 0; i < game.order.length; i++) {
-                    const color = game.order[i];
-                    const isCurrent = color === game.current.player;
-                    const details = game.players[color];
-        
-                    el.appendChild(player(color, details.name, details.score, details.trains, isCurrent))
-                }
-
-                el.appendChild(button('red', 'Leave Game', leaveGame));
-            });
+            update('players', [
+                ...game.order.map(color => player(color, game.players[color], color === game.current.player)),
+                button('red', 'Leave Game', leaveGame)
+            ]);
         }
 
-    
-        dom.hand.forEach((el) => {
-            el.innerHTML = '';
+        if (game.me) {
+            update('hand', cardColors.map(color => game.routeToBePlayed
+                ? onClick(card(color, game.me.hand[color] || 0), (e) => {
+                    e.target.setAttribute('active', '');
 
-            if (!game.me) {
-                return;
-            }
+                    api.playPath({
+                        key: db.parseId(game.key),
+                        start: game.routeToBePlayed.start,
+                        end: game.routeToBePlayed.end,
+                        color: color
+                    }).then((function() {
+                        option.removeAttribute('active');
+                        selectNone();
+                    }));
+                })
+                : card(color, game.me.hand[color] || 0)
+            ));
 
-            const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'locomotive', 'black', 'white'];
-    
-            for (const color of colors) {
-                const option = card(color, game.me.hand[color] || 0);
+            update('routes', [
+                ...game.me.routes.map(routeCard),
+                newRouteCard(game.key),
+            ]);
 
-                if (game.routeToBePlayed) {
-                    option.addEventListener('click', () => {
-                        option.setAttribute('active', '');
+            const needToChoose = game.me.routes.some(route => !route.chosen);
 
-                        api.playPath({
-                            key: db.parseId(game.key),
-                            start: game.routeToBePlayed.start,
-                            end: game.routeToBePlayed.end,
-                            color: color
-                        }).then((function() {
-                            option.removeAttribute('active');
-                            selectNone();
-                        }));
-                    });
-                }
+            if (needToChoose) {
+                let chosen = [];
 
-                el.appendChild(option);
-            }
-        });
-
-        dom.routes.forEach((el) => {
-            el.innerHTML = '';
-
-            if (!game.me || !game.me.routes) {
-                return;
-            }
-
-            for (const route of game.me.routes) {
-                if (route.chosen) {
-                    el.appendChild(routeCard(route.start, route.end, route.worth, route.completed));
-                }
-            }
-
-            el.appendChild(newRouteCard(game.key));
-        });
-
-        dom.routeOpts.forEach((el) => {
-            if (!game.me || !game.me.routes) {
-                return;
-            }
-
-            let needsToChoose = false;
-            const chosen = [];
-
-            function toggle(route, card) {
-                let found = false;
-
-                for(let i = 0; i < chosen.length; i++) {
-                    if (chosen[i] === route) {
-                        found = true;
-                        chosen.splice(i, 1);
+                function toggle(route, card) {
+                    if (chosen.includes(route)) {
+                        chosen = chosen.filter(r => r !== route);
                         card.removeAttribute('chosen');
-                        break;
+                    } else {
+                        chosen = [...chosen, route];
+                        card.setAttribute('chosen', '');
                     }
                 }
 
-                if (!found) {
-                    card.setAttribute('chosen', '');
-                    chosen.push(route);
-                }
-            }
+                update('routeOpts', [
+                    ...game.me.routes(route => onClick(routeCard(route), (e) => toggle(route, e.target))),
+                    button('green', 'Choose Routes', () => {
+                        if (!chosen.length) {
+                            return alert('You have not chosen any routes.');
+                        }
+    
+                        if (game.me.routes.length < 4 && chosen.length < 2) {
+                            return alert('You must choose at least 2 routes to start.');
+                        }
+    
+                        api.chooseRoutes({ key: db.parseId(game.key), routes: JSON.stringify(chosen) });
+                    })
+                ]);
 
-            el.innerHTML = '';
-
-            for (const route of game.me.routes) {
-                if (!route.chosen) {
-                    needsToChoose = true;
-                    const now = routeCard(route.start, route.end, route.worth);
-                    now.addEventListener('click', () => toggle(route, now));
-                    el.appendChild(now);
-                }
-            }
-
-            if (needsToChoose) {
-                el.appendChild(button('green', 'Choose Routes', function() {
-                    if (!chosen.length) {
-                        return alert('You have not chosen any routes.');
-                    }
-
-                    if (game.me.routes.length < 4 && chosen.length < 2) {
-                        return alert('You must choose at least 2 routes to start.');
-                    }
-
-                    api.chooseRoutes({ key: db.parseId(game.key), routes: JSON.stringify(chosen) });
-                }));
-
-                el.removeAttribute('hide');
+                show(dom.routeOpts);
             } else {
-                el.setAttribute('hide', '');
+                hide(dom.routeOpts);
             }
-        });
-    
-        dom.deck.forEach((el) => {
-            el.innerHTML = '';
-    
-            for (const slot in game.slots) {
-                const option = card(game.slots[slot]);
-                const action = api.takeCard.bind(null, {
-                    key: db.parseId(game.key),
-                    slot: slot
-                });
+        }
 
-                option.addEventListener('click', () => {
-                    option.setAttribute('active', '');
-                    action().then(() => option.removeAttribute('active'));
-                });
-
-                el.appendChild(option);
-            }
-
-            const back = card('back');
-            back.addEventListener('click', api.drawCard.bind(null, { key: db.parseId(game.key) }));
-            el.appendChild(back);
-        });
+        update('deck', [
+            ...Object.keys(game.slots).map((slot) => onClick(card(game.slots[slot]), (e) => {
+                e.target.setAttribute('active', '');
+                api.takeCard({ key: db.parseId(game.key), slot: slot })
+                    .then(() => e.target.removeAttribute('active'));
+            })),
+            onClick(card('back'), () => api.drawCard({ key: db.parseId(game.key) }))
+        ]);
 
         if (game.isMyTurn || game.started === 'finished') {
             dom.game.setAttribute('my-turn', '');
@@ -353,35 +310,22 @@ function onUpdate(game) {
             dom.game.removeAttribute('my-turn');
         }
     } else {
-        dom.tokens.forEach((el) => {
-            const key = game.key || dom.joinSearch.value;
-            el.innerHTML = '';
-    
-            const colors = ['red', 'yellow', 'green', 'blue', 'black'];
-    
-            for (const color of colors) {
-                if (!(color in game.players)) {
-                    const colorToken = token(color);
-                    colorToken.addEventListener('click', () => api.joinGame({ key: db.parseId(key), color: color }));
-                    el.appendChild(colorToken);
-                }
-            }
-        });
+        const key = game.key || dom.joinSearch.value;
 
-        dom.players.forEach((el) => {
-            el.innerHTML = '';
-            
-            for(const color in game.players) {
-                var details = game.players[color];
-    
-                el.appendChild(player(color, details.name, 0, details.trains, false));
-            }
+        update('tokens', colors
+            .filter(color => color in game.players)
+            .map(color => onClick(token(color), () => api.joinGame({ key: db.parseId(key), color: color })))
+        );
 
-            el.appendChild(button('red', 'Leave Game', leaveGame));
-        });
+        update('players', [
+            ...game.order.map(color => player(color, game.players[color], false)),
+            button('red', 'Leave Game', leaveGame)
+        ]);
 
         if (Object.keys(game.players).length > 1) {
             dom.start.removeAttribute('disabled');
+        } else {
+            dom.start.setAttribute('disabled', '');
         }
 
         if (game.me && router.route().includes('/color')) {
@@ -389,33 +333,37 @@ function onUpdate(game) {
         }
     }
 
-    dom.key.forEach((el)  => el.innerHTML = game.key);
+    update('key', game.key);
 
-    dom.board.forEach((el) => {
-        attachDragEvents(el, db.parseId(game.key));
+    if (router.route().startsWith('/game')) {
+        attachDragEvents(dom.gameBoard, db.parseId(game.key));
+        draw.surface(dom.gameBoard.getContext('2d'));
+    }
 
-        if (!notHidden(el)) {
-            draw.surface(el.getContext('2d'));
-            draw.size(game.board.size);
-            draw.cities(game.board.points);
-        }
-        
-        draw.paths(game.board.connections);
-    });
+    if (router.route().startsWith('/display')) {
+        console.log('drawing to display');
+        attachDragEvents(dom.displayBoard, db.parseId(game.key));
+        draw.surface(dom.displayBoard.getContext('2d'));
+    }
+
+    draw.size(game.board.size)
+        .cities(game.board.points)
+        .paths(game.board.connections)
+        .update();
 
     localStorage.setItem('game-key', game.key);
 }
 
-dom.joinFind.addEventListener('click', () => {
-    const key = dom.joinSearch.value;
+onClick('joinFind', () => {
+    const key = value('joinSearch');
 
-    if (!key || key.length !== 4) {
-        return alert('Enter a 4 character game key.');
+    if (!key.match(/^[A-Z]{4}$/i)) {
+        return popup('Enter a 4 character game key.');
     }
 
     db.isGame(key).then((game) => {
         if (!game || (game.started && !game.me)) {
-            return alert('Game not found or has already started.');
+            return popup('Game not found or has already started.');
         }
 
         localStorage.setItem('game-key', game.key);
@@ -424,16 +372,16 @@ dom.joinFind.addEventListener('click', () => {
     });
 });
 
-dom.displayFind.addEventListener('click', () => {
-    const key = dom.displaySearch.value;
+onClick('displayFind', () => {
+    const key = value('displaySearch');
 
-    if (!key || key.length !== 4) {
-        return alert('Enter a 4 character game key.');
+    if (!key.match(/^[A-Z]{4}$/i)) {
+        return popup('Enter a 4 character game key.');
     }
 
-    db.isGame(key).then((isGame) => {
-        if (!isGame) {
-            return alert('Game not found.');
+    db.isGame(key).then((game) => {
+        if (!game) {
+            return popup('Game not found.');
         }
 
         localStorage.setItem('game-key', game.key);
@@ -442,7 +390,7 @@ dom.displayFind.addEventListener('click', () => {
     });
 });
 
-dom.start.addEventListener('click', () => {
+onClick('start', () => {
     const key = localStorage.getItem('game-key');
 
     if (!key) {
@@ -453,7 +401,7 @@ dom.start.addEventListener('click', () => {
     api.startGame({ key: db.parseId(key) }).then(() => router.update('/game'));
 });
 
-window.addEventListener('load', () => {
+router.onStart(() => {
     const key = localStorage.getItem('game-key');
     const version = localStorage.getItem('app-version');
 
@@ -477,33 +425,22 @@ window.addEventListener('load', () => {
         }
     });
 
-    document.body.removeAttribute('hide');
+    show(document.body);
 
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/install.js');
-    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/install.js');
 });
-
-const createGame = (color) => () => {
-    api.createGame({ color: color }).then((res) => {
-        db.watchGame(res.key, onUpdate);
-        router.update('/create/share');
-    });
-};
 
 router.onEnter('/create/color', () => {
     authorize();
-    dom.tokens.forEach((el) => {
-        el.innerHTML = '';
 
-        const colors = ['red', 'yellow', 'green', 'blue', 'black'];
-    
-        for (const color of colors) {
-            var colorToken = token(color);
-            colorToken.addEventListener('click', createGame(color));
-            el.appendChild(colorToken);
-        }
-    });
+    const colors = ['red', 'yellow', 'green', 'blue', 'black'];
+
+    update('tokens', colors.map((color) => onClick(token(color), () => api.createGame({ color: color })
+        .then((res) => {
+            db.watchGame(res.key, onUpdate);
+            router.update('/create/share');
+        })
+    )));
 });
 
 router.onEnter('/landing', () => {
@@ -534,15 +471,13 @@ function back(color) {
     }
 }
 
-function reset(color) {
+const reset = (color) => () => {
     const el = $$('[game] [nav] [' + color + ']')[0];
 
-    return () => {
-        resetRoute();
-        el.innerHTML = el.oldText;
-        el.setAttribute('nav-to', el.oldRoute);
-    }
-}
+    resetRoute();
+    el.innerHTML = el.oldText;
+    el.setAttribute('nav-to', el.oldRoute);
+};
 
 router.onEnter('/game/scores', back('red'));
 router.onEnter('/game/hand', back('yellow'));
@@ -554,6 +489,4 @@ router.onLeave('/game/hand', reset('yellow'));
 router.onLeave('/game/deck', reset('green'));
 router.onLeave('/game/routes', reset('blue'));
 
-window.onerror = function(msg, src, line, col) {
-    api.log({ log: src + ' ' + line + ':' + col + ' -- ' + msg });
-}
+window.onerror = (msg, src, line, col) => api.log({ log: src + ' ' + line + ':' + col + ' -- ' + msg });

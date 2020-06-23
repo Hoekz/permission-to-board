@@ -1,4 +1,4 @@
-var api = (function() {
+const api = (function() {
     const baseUrl = location.href.indexOf('localhost') > -1
         ? 'http://localhost:1234/permission-to-board/us-central1/'
         : 'https://us-central1-permission-to-board.cloudfunctions.net/';

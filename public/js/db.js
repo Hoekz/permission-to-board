@@ -45,7 +45,7 @@ const db = (function() {
                 score: score,
                 trains: players[color].trains,
                 hand: players[color].hand || {},
-                routes: players[color].routes,
+                routes: players[color].routes || [],
                 hasLongestTrain: 'longestTrainBonus' in players[color]
             };
 

@@ -183,11 +183,12 @@ const draw = (function() {
         return draw(shift.x, shift.y, scale);
     };
 
-    return {
-        size: drawAfter((s) => Object.assign(size, s)),
-        surface: drawAfter((s) => surface = s),
-        cities: drawAfter((c) => cities = c),
-        paths: drawAfter((p) => paths = p),
+    const board = {
+        update: () => { redraw = true; draw(); },
+        size: (s) => { Object.assign(size, s); return board; },
+        surface: (s) => { surface = s; return board; },
+        cities: (c) => { cities = c; return board; },
+        paths: (p) => { paths = p; return board; },
         showNames: drawAfter((b) => showNames = b),
         highlight: drawAfter((p) => {
             selected = null;
@@ -210,4 +211,6 @@ const draw = (function() {
             redraw = false;
         })
     };
+
+    return board;
 })();

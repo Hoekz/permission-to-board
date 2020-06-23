@@ -1,7 +1,5 @@
-function arc(A, B, n, isDbl) {
-    // use straight lines for now, offset slightly based off multi-path
-    return line(A, B, n, isDbl);
-}
+// use straight lines for now, offset slightly based off multi-path
+const arc = (A, B, n, isDbl) => line(A, B, n, isDbl);
 
 function line(A, B, n, isDbl) {
     const abx = B.x - A.x;

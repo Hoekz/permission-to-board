@@ -73,6 +73,7 @@ function attachDragEvents(el, gameKey) {
         state.x = e.clientX;
         state.y = e.clientY;
         cancelDragging = setTimeout(() => state.dragging = true, 200);
+        e.preventDefault();
     });
 
     el.addEventListener('mouseup', (e) => {
